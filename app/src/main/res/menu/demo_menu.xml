@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<item
+    android:id="@+id/test_1"
+    android:title="@string/home"
+    android:icon="@mipmap/ic_launcher"
+    ></item>
+    <item
+        android:id="@+id/test_2"
+        android:title="资讯"
+        android:icon="@mipmap/ic_launcher"
+        ></item>
+    <item
+        android:id="@+id/test_3"
+        android:title="我的"
+        android:icon="@mipmap/ic_launcher"
+        ></item>
+</menu>

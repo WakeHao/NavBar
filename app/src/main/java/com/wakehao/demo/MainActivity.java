@@ -1,4 +1,4 @@
-package com.wakehao.bottomnavigationbar;
+package com.wakehao.demo;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;

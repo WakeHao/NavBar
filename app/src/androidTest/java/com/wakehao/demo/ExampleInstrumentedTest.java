@@ -1,4 +1,4 @@
-package com.wakehao.bottomnavigationbar;
+package com.wakehao.demo;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

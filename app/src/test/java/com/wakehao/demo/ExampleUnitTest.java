@@ -1,4 +1,4 @@
-package com.wakehao.bottomnavigationbar;
+package com.wakehao.demo;
 
 import org.junit.Test;
 
