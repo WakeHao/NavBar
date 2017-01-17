@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="BottomNavigationView">
-        <item name="elevation">@dimen/design_bottom_navigation_elevation</item>
+        <item name="barElevation">@dimen/bar_elevation</item>
+        <item name="itemBackground">?attr/selectableItemBackgroundBorderless</item>
     </style>
 
 </resources>

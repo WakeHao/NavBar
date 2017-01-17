@@ -2,7 +2,15 @@
 <resources>
     <declare-styleable name="BottomNavigationBar">
         <attr name="menu" format="reference"> </attr>
-        
+        <attr name="switchMode" format="enum">
+            <enum name="scale" value="0"></enum>
+            <enum name="shift" value="1"></enum>
+            <enum name="still" value="2"></enum>
+        </attr>
+        <attr name="barElevation" format="dimension"></attr>
+        <attr name="itemBackground" format="reference"></attr>
+
+
     </declare-styleable>
     
 </resources>

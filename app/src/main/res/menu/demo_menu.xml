@@ -3,16 +3,22 @@
 <item
     android:id="@+id/test_1"
     android:title="@string/home"
-    android:icon="@mipmap/ic_launcher"
+    android:icon="@drawable/ic_home"
     ></item>
     <item
         android:id="@+id/test_2"
         android:title="资讯"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/ic_t2"
         ></item>
     <item
         android:id="@+id/test_3"
         android:title="我的"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/ic_t3"
         ></item>
-</menu>
+    <item
+        android:id="@+id/test_4"
+        android:title="信息"
+        android:icon="@drawable/ic_t4"
+        ></item>
+    </menu>
+    <!--shiftedColor="@color/colorPrimaryDark"-->

@@ -1,4 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="design_bottom_navigation_elevation">8dp</dimen>
+    <dimen name="bar_elevation">8dp</dimen>
+    <dimen name="bar_height">56dp</dimen>
+    <dimen name="bar_active_item_max_width">168dp</dimen>
+    <dimen name="bar_active_item_min_width">96dp</dimen>
+
+
+
+
+    <dimen name="bar_inactive_item_max_width">96dp</dimen>
+    <dimen name="bar_inactive_item_min_width">56dp</dimen>
+
+
+    <dimen name="item_active_marginTop">6dp</dimen>
+    <dimen name="item_scaleInactive_marginTop">8dp</dimen>
+    <dimen name="item_shiftInactive_marginTop">16dp</dimen>
+
+    <dimen name="item_active_marginBottom">10dp</dimen>
+
+    <dimen name="item_icon_size">24dp</dimen>
+
+    <dimen name="item_active_text_size">14sp</dimen>
+    <dimen name="item_inactive_text_size">12sp</dimen>
+
 </resources>
