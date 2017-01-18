@@ -1,6 +1,7 @@
 package com.wakehao.bar;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -9,6 +10,8 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.support.annotation.ColorInt;
+import android.util.TypedValue;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -68,4 +71,30 @@ public class BarUtils {
     {
         return context.getResources().getDisplayMetrics().widthPixels;
     }
+
+    private static final int[] APPCOMPAT_CHECK_ATTRS = {
+            android.support.v7.appcompat.R.attr.colorPrimary
+    };
+
+    static void checkAppCompatTheme(Context context) {
+        TypedArray a = context.obtainStyledAttributes(APPCOMPAT_CHECK_ATTRS);
+        final boolean failed = !a.hasValue(0);
+        if (a != null) {
+            a.recycle();
+        }
+        if (failed) {
+            throw new IllegalArgumentException("You need to use a Theme.AppCompat theme "
+                    + "(or descendant) with the design library.");
+        }
+    }
+
+    public static @ColorInt int  getAppColorPrimary(Context context) {
+        checkAppCompatTheme(context);
+        TypedValue typedValue = new TypedValue();
+        context.getTheme().resolveAttribute(R.attr.colorPrimary, typedValue, true);
+        return typedValue.data;
+    }
+
+
+
 }

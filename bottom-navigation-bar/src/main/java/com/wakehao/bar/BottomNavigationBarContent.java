@@ -30,6 +30,8 @@ public class BottomNavigationBarContent extends LinearLayout {
     private int mActivePosition=0;
     private OnClickListener mOnClickListener;
     private int[] widthSpec;
+    private int mSwitchMode;
+
 
     public BottomNavigationBarContent(Context context) {
         this(context,null);
@@ -118,40 +120,48 @@ public class BottomNavigationBarContent extends LinearLayout {
         int counts =bottomNavigationItems.size();
         widthSpec = new int[counts];
         int screenWidth=BarUtils.getDeviceWidth(getContext());
-        int heightSpec=MeasureSpec.makeMeasureSpec(mBottomNavigationBarHeight,MeasureSpec.EXACTLY);
-        //TODO mode==shift
+//        int heightSpec=MeasureSpec.makeMeasureSpec(mBottomNavigationBarHeight,MeasureSpec.EXACTLY);
 
-//            if(mode==xxx) TODO
-            int remain_activeMax=screenWidth-(counts-1)*mInactiveItemMinWidth;
-            int activeItem=Math.min(mActiveItemMaxWidth,remain_activeMax);
-            //
+        int remain_activeMax;
+        int activeItem;
+        int inActiveItem;
+        int remain;
+        //shift mode
+        if(mSwitchMode==1){
+             remain_activeMax=screenWidth-(counts-1)*mInactiveItemMinWidth;
+             activeItem=Math.min(mActiveItemMaxWidth,remain_activeMax);
+
             if(activeItem<mActiveItemMinWidth)activeItem=mActiveItemMinWidth;
             int remain_inActiveMax=(screenWidth - activeItem) / (counts - 1);
-            int inActiveItem=Math.min(mInactiveItemMaxWidth,remain_inActiveMax);
+            inActiveItem=Math.min(mInactiveItemMaxWidth,remain_inActiveMax);
 
-            int remain=screenWidth-activeItem-(counts-1)*inActiveItem;
-
-            for(int i=0;i<counts;i++){
-                widthSpec[i]=mActivePosition==i?activeItem:inActiveItem;
-                if(remain>0){
-                    widthSpec[i]++;
-                    remain--;
-                }
-            }
+            remain=screenWidth-activeItem-(counts-1)*inActiveItem;
+        }
+        else {
+             remain_activeMax=screenWidth/counts;
+             activeItem=Math.min(mActiveItemMaxWidth,remain_activeMax);
+             inActiveItem=activeItem;
+             remain=screenWidth-activeItem*counts;
+        }
 
         for (int i=0;i<counts;i++)
         {
+            widthSpec[i]=mActivePosition==i?activeItem:inActiveItem;
+            if(remain>0){
+                widthSpec[i]++;
+                remain--;
+            }
             final BottomNavigationItem item = bottomNavigationItems.get(i);
             item.setClickable(true);
             item.setPosition(i);
             item.setOnClickListener(mOnClickListener);
-            item.setActiveItemWidth(activeItem);
-            item.setInActiveItemWidth(inActiveItem);
-            LinearLayout.LayoutParams layoutParams
-                    =new LinearLayout.LayoutParams(widthSpec[i],mBottomNavigationBarHeight);
+                item.setActiveItemWidth(activeItem);
+                item.setInActiveItemWidth(inActiveItem);
+            LinearLayout.LayoutParams layoutParams=new LinearLayout.LayoutParams(
+                    widthSpec[i],mBottomNavigationBarHeight);
             item.setLayoutParams(layoutParams);
             addView(item);
-            if(i==mActivePosition)setItemSelected(mActivePosition);
+//            if(i==mActivePosition)setItemSelected(mActivePosition);
         }
     }
     private BottomNavigationBar.OnNavigationItemSelectedListener mListener;
@@ -163,5 +173,10 @@ public class BottomNavigationBarContent extends LinearLayout {
         for(BottomNavigationItem item: bottomNavigationItems){
             item.finishInit();
         }
+    }
+
+    public BottomNavigationBarContent setSwitchMode(int mSwitchMode) {
+        this.mSwitchMode = mSwitchMode;
+        return this;
     }
 }

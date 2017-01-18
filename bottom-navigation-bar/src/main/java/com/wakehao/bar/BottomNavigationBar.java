@@ -41,6 +41,8 @@ public class BottomNavigationBar extends FrameLayout{
     private float currentRadius=0f;
     private Paint mPaint;
     private View circleView;
+    private int activeColor;
+    private int inActiveColor;
 
 
     public BottomNavigationBar(Context context) {
@@ -72,12 +74,15 @@ public class BottomNavigationBar extends FrameLayout{
 
 
         itemBackGroundRes = typedArray.getResourceId(R.styleable.BottomNavigationBar_itemBackground, 0);
+        activeColor = typedArray.getColor(R.styleable.BottomNavigationBar_selectedColor, BarUtils.getAppColorPrimary(context));
+        inActiveColor = typedArray.getColor(R.styleable.BottomNavigationBar_unSelectedColor, Color.GRAY);
+
 
         if(typedArray.hasValue(R.styleable.BottomNavigationBar_menu)){
             ItemParser parser=new ItemParser(context,getDefaultConfig());
             parser.parser(typedArray.getResourceId(R.styleable.BottomNavigationBar_menu,0));
             mBottomNavigationBarContent=new BottomNavigationBarContent(context);
-            mBottomNavigationBarContent.setItems(parser.getBottomNavigationItems());
+            mBottomNavigationBarContent.setSwitchMode(mSwitchMode).setItems(parser.getBottomNavigationItems());
             FrameLayout.LayoutParams layoutParams=new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER);
             addView(mBottomNavigationBarContent,layoutParams);
             mBottomNavigationBarContent.finishInit(parser.getBottomNavigationItems());
@@ -111,6 +116,8 @@ public class BottomNavigationBar extends FrameLayout{
                 //TODO setValue
                 .setItemBackGroundRes(itemBackGroundRes)
                 .setSwitchMode(mSwitchMode)
+                .setActiveColor(activeColor)
+                .setInActiveColor(inActiveColor)
                 .build();
     }
 

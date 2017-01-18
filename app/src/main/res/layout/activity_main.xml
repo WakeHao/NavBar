@@ -9,9 +9,9 @@
 
 <com.wakehao.bar.BottomNavigationBar
     android:id="@+id/bar"
-    app:switchMode="shift"
+    app:switchMode="scale"
     app:menu="@menu/demo_menu"
-
+    app:selectedColor="#45C01A"
     android:layout_alignParentBottom="true"
     android:layout_width="match_parent"
     android:layout_height="56dp">

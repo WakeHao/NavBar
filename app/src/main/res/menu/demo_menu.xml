@@ -3,22 +3,26 @@
 <item
     android:id="@+id/test_1"
     android:title="@string/home"
-    android:icon="@drawable/ic_home"
+    android:icon="@mipmap/home_normal"
+    icon2="@mipmap/home_selected"
     ></item>
     <item
         android:id="@+id/test_2"
-        android:title="资讯"
-        android:icon="@drawable/ic_t2"
+        android:title="通讯录"
+        android:icon="@mipmap/category_normal"
+        icon2="@mipmap/category_selected"
         ></item>
     <item
         android:id="@+id/test_3"
-        android:title="我的"
-        android:icon="@drawable/ic_t3"
+        android:title="发现"
+        android:icon="@mipmap/service_normal"
+        icon2="@mipmap/service_selected"
         ></item>
     <item
         android:id="@+id/test_4"
-        android:title="信息"
-        android:icon="@drawable/ic_t4"
+        android:title="我"
+        android:icon="@mipmap/mine_normal"
+        icon2="@mipmap/mine_selected"
         ></item>
     </menu>
     <!--shiftedColor="@color/colorPrimaryDark"-->

@@ -9,8 +9,11 @@
         </attr>
         <attr name="barElevation" format="dimension"></attr>
         <attr name="itemBackground" format="reference"></attr>
+        <attr name="selectedColor" format="color"></attr>
+        <attr name="unSelectedColor" format="color"></attr>
 
-
+        <!--<attr name="itemIconTint" format="color"></attr>-->
+        <!--<attr name="itemTextColor" format="color"></attr>-->
     </declare-styleable>
     
 </resources>

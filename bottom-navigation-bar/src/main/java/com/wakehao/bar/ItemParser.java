@@ -74,6 +74,9 @@ public class ItemParser {
                 case "icon":
                     item.setIconRes(parser.getAttributeResourceValue(i,0));
                     break;
+                case "icon2":
+                    item.setIconResSelected(parser.getAttributeResourceValue(i,0));
+                    break;
                 case "title":
 
                     item.setTitle(getTitleText(i,parser));

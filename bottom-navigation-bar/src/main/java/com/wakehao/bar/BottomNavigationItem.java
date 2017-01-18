@@ -13,6 +13,9 @@ import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.LightingColorFilter;
 import android.graphics.Paint;
+import android.graphics.PaintFlagsDrawFilter;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
@@ -33,6 +36,7 @@ import android.view.ViewGroup;
 
 public class BottomNavigationItem extends View {
     private @DrawableRes int iconRes;
+    private @DrawableRes int iconRes2_selected;
     private String title;
     private Config config;
     private int mPosition;
@@ -51,6 +55,10 @@ public class BottomNavigationItem extends View {
     private static final long ACTIVE_ANIMATION_DURATION_MS = 150L;
     private int activeItemWidth;
     private int inActiveItemWidth;
+
+//    private int mSelectedColor;
+//    private int mUnSelectedColor;
+
 
     public BottomNavigationItem(Context context) {
         this(context,null);
@@ -73,10 +81,19 @@ public class BottomNavigationItem extends View {
 
     }
 
+    Bitmap bitmap_selected;
     private void initDefaultOption() {
+        if(mPosition==0)isSelected=true;
         if(mPosition==0&&mShiftedColor!=0) ((BottomNavigationBar) getParent().getParent()).setFirstItemBackgroundColor(mShiftedColor);
         if(mShiftedColor==0)setItemBackground(config.itemBackGroundRes);//recall onDraw()
         mBitmap= BitmapFactory.decodeResource(getResources(),iconRes);
+        if(iconRes2_selected!=0){
+            //change bitmap
+            bitmap_selected=BitmapFactory.decodeResource(getResources(),iconRes2_selected);
+        }
+        initPaint();
+        init();
+
     }
 
 
@@ -88,6 +105,9 @@ public class BottomNavigationItem extends View {
         this.iconRes = iconRes;
     }
 
+    public void setIconResSelected(int iconRes2_selected){
+        this.iconRes2_selected=iconRes2_selected;
+    }
     public String getTitle() {
         return title;
     }
@@ -175,8 +195,6 @@ public class BottomNavigationItem extends View {
                 this.switchMode = switchMode;
                 return this;
             }
-
-
             public Config build()
             {
                 return new Config(this);
@@ -193,7 +211,48 @@ public class BottomNavigationItem extends View {
     private boolean isSelected;
     public void setSelected(boolean isSelected){
         this.isSelected=isSelected;
-        translateAnim();
+        changeColor(isSelected?config.activeColor:config.inActiveColor);
+        switch (config.getSwitchMode()){
+            case 0:
+                scaleAnim();
+                break;
+            case 1:
+                translateAnim();
+                break;
+            case 2:
+                invalidate();
+                break;
+        }
+    }
+
+
+    private float scaleFraction;
+    private void scaleAnim() {
+        final ValueAnimator scaleAnimator;
+        if(isSelected){
+            scaleAnimator=ValueAnimator.ofFloat(mScaleInactiveMarginTop,mActiveMarginTop);
+        }
+        else {
+            if(mPaint.getTextSize()==mInactiveTextSize)return;
+            scaleAnimator=ValueAnimator.ofFloat(mActiveMarginTop,mScaleInactiveMarginTop);
+        }
+        scaleAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                isRefresh=true;
+                scaleFraction=animation.getAnimatedFraction();
+                float change=scaleFraction*(mScaleInactiveMarginTop-mActiveMarginTop);
+                if(isSelected){
+                    rectF.set(getWidth()/2-mIconSizeWidth/2,mScaleInactiveMarginTop-change,getWidth()/2+mIconSizeWidth/2,mScaleInactiveMarginTop-change+mIconSizeHeight);
+                }
+                else {
+                    rectF.set(getWidth()/2-mIconSizeWidth/2,mActiveMarginTop+change,getWidth()/2+mIconSizeWidth/2,mActiveMarginTop+change+mIconSizeHeight);
+                }
+                invalidate();
+            }
+        });
+        scaleAnimator.setDuration(ACTIVE_ANIMATION_DURATION_MS);
+        scaleAnimator.start();
     }
 
     public void setItemBackground(int background) {
@@ -202,50 +261,184 @@ public class BottomNavigationItem extends View {
         ViewCompat.setBackground(this, backgroundDrawable);
     }
 
-
+    PaintFlagsDrawFilter paintFlagsDrawFilter;
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        if(initFinished){
-            initPaint();
-            drawIcon(canvas);
-            drawText(canvas);
+//        canvas.setDrawFilter(new PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG));
+        if(paintFlagsDrawFilter==null){
+            paintFlagsDrawFilter= new PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
+            canvas.setDrawFilter(paintFlagsDrawFilter);
         }
+        if(initFinished){
+            switch (config.getSwitchMode()){
+                case 0:
+                    drawScaledIcon(canvas);
+                    drawScaledText(canvas);
+                    break;
+                case 1:
+                    drawShiftedIcon(canvas);
+                    drawShiftedText(canvas);
+                    break;
+                case 2:
+                    drawStillIcon(canvas);
+                    drawStillText(canvas);
+                    break;
+            }
+        }
+
+    }
+
+    private void drawStillText(Canvas canvas) {
+        updateTextPaint(mActiveTextSize);
+        canvas.drawText(title,getWidth()/2-textRect.width()/2,BarUtils.dip2px(getContext(),46),mPaint);
+    }
+
+    private void drawStillIcon(Canvas canvas) {
+        rectF.set(getWidth()/2-mIconSizeWidth/2,mActiveMarginTop,getWidth()/2+mIconSizeWidth/2,mActiveMarginTop+mIconSizeHeight);
+        canvas.drawBitmap(mBitmap, rect, rectF, mPaint);
+    }
+
+    private void init() {
+        if (textRect == null) {
+            textRect = new Rect();
+            mPaint.getTextBounds(title, 0, title.length(), textRect);
+        }
+
+        if(rect==null){
+            int width = mBitmap.getWidth();
+            int height = mBitmap.getHeight();
+            //校正图片不是正方形变形问题
+            if(width>height){
+                mIconSizeWidth=mIconSize;
+                mIconSizeHeight=(((float)height/(float)width))*mIconSize;
+            }
+            else if(width<height)
+            {
+                mIconSizeHeight=mIconSize;
+                mIconSizeWidth=(width/height)*mIconSize;
+            }
+            else {
+                mIconSizeWidth=mIconSize;
+                mIconSizeHeight=mIconSize;
+            }
+            rect=new Rect(0,0,width,height);
+
+        }
+        if(rectF==null){
+            rectF=new RectF();
+        }
+
+        if(mPosition==0)changeColor(config.activeColor);
+        else changeColor(config.inActiveColor);
+
+    }
+
+    private void updateTextPaint(float textSize){
+        mPaint.setTextSize(textSize);
+        mPaint.getTextBounds(title, 0, title.length(), textRect);
+    }
+    private void drawScaledText(Canvas canvas) {
+        if(isRefresh){
+            if(isSelected){
+                updateTextPaint(mInactiveTextSize+(mActiveTextSize-mInactiveTextSize)*scaleFraction);
+            }
+            else {
+
+                updateTextPaint(mActiveTextSize-(mActiveTextSize-mInactiveTextSize)*scaleFraction);
+            }
+            canvas.drawText(title,getWidth()/2-textRect.width()/2,BarUtils.dip2px(getContext(),46),mPaint);
+            return;
+        }
+        updateTextPaint(mPosition==0?mActiveTextSize:mInactiveTextSize);
+        canvas.drawText(title,getWidth()/2-textRect.width()/2,BarUtils.dip2px(getContext(),46),mPaint);
+    }
+
+    private float mIconSizeWidth;
+    private float mIconSizeHeight;
+
+    private void drawScaledIcon(Canvas canvas) {
+        if(isRefresh){
+            if(iconRes2_selected!=0){
+                canvas.drawBitmap(isSelected?bitmap_selected:mBitmap, rect, rectF, mPaint);
+                return;
+            }
+            canvas.drawBitmap(mBitmap, rect, rectF, mPaint);
+            return;
+        }
+        if(isSelected){
+            rectF.set(getWidth()/2-mIconSizeWidth/2,mActiveMarginTop,getWidth()/2+mIconSizeWidth/2,mActiveMarginTop+mIconSizeHeight);
+
+            if(iconRes2_selected!=0){
+                canvas.drawBitmap(bitmap_selected, rect, rectF, mPaint);
+                return;
+            }
+
+        }
+        else {
+            rectF.set(getWidth()/2-mIconSizeWidth/2,mScaleInactiveMarginTop,getWidth()/2+mIconSizeWidth/2,mScaleInactiveMarginTop+mIconSizeHeight);
+
+        }
+        canvas.drawBitmap(mBitmap, rect, rectF, mPaint);
+    }
+
+    private void drawShiftedText(Canvas canvas) {
+        if (isRefresh) {
+            if (isSelected) {
+//                mPaint.setTextSize(mActiveTextSize * animatedFraction);
+                updateTextPaint(mActiveTextSize * animatedFraction);
+            } else {
+//                mPaint.setTextSize(mActiveTextSize - mActiveTextSize * animatedFraction);
+                updateTextPaint(mActiveTextSize - mActiveTextSize * animatedFraction);
+            }
+            canvas.drawText(title, getWidth() / 2 - textRect.width() / 2, BarUtils.dip2px(getContext(), 46), mPaint);
+            return;
+        }
+
+        if (mPosition == 0) {
+            canvas.drawText(title, getWidth() / 2 - textRect.width() / 2, BarUtils.dip2px(getContext(), 46), mPaint);
+        }
+    }
+
+
+    private void drawShiftedIcon(Canvas canvas) {
+        if(isRefresh){
+            canvas.drawBitmap(mBitmap, rect, rectF, mPaint);
+            return;
+        }
+
+        if(mPosition==0){
+            rectF.set(getWidth()/2-mIconSizeWidth/2,mActiveMarginTop,getWidth()/2+mIconSizeWidth/2,mActiveMarginTop+mIconSizeHeight);
+        }
+        else {
+            rectF.set(getWidth()/2-mIconSizeWidth/2,mShiftInactiveMarginTop,getWidth()/2+mIconSizeWidth/2,mShiftInactiveMarginTop+mIconSizeHeight);
+        }
+
+        canvas.drawBitmap(mBitmap, rect, rectF, mPaint);
     }
 
     private void initPaint() {
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+//        mPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
+        mPaint.setTextSize(mPosition==0?mActiveTextSize:mInactiveTextSize);
     }
 
 
     RectF rectF;
     Rect rect;
     boolean isRefresh;
-    private void drawIcon(Canvas canvas) {
-        if(isRefresh){
-            canvas.drawBitmap(mBitmap, rect, rectF, mPaint);
+    Rect textRect;
+    float animatedFraction;
+
+
+    private void changeColor(@ColorInt int color) {
+        if(iconRes2_selected!=0){
+            mPaint.setColor(color);
             return;
         }
-        if(rect==null)rect=new Rect(0,0,mBitmap.getWidth(),mBitmap.getHeight());
-        if(rectF==null){
-            rectF=new RectF();
-        }
-        if(mPosition==0){
-            rectF.set(getWidth()/2-mIconSize/2,mActiveMarginTop,getWidth()/2+mIconSize/2,mActiveMarginTop+mIconSize);
-        }
-        else {
-            rectF.set(getWidth()/2-mIconSize/2,mShiftInactiveMarginTop,getWidth()/2+mIconSize/2,mShiftInactiveMarginTop+mIconSize);
-        }
-        canvas.drawBitmap(mBitmap, rect, rectF, mPaint);
-    }
-
-    private void drawText(Canvas canvas) {
-
-    }
-
-    private void changeBitmapColor(@ColorInt int color) {
         ColorFilter filter = new LightingColorFilter(color, 1);
         mPaint.setColorFilter(filter);
+        mPaint.setColor(color);
     }
 
     public void translateAnim(){
@@ -262,12 +455,17 @@ public class BottomNavigationItem extends View {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 float animatedValue = (float) animation.getAnimatedValue();
-                float change = animation.getAnimatedFraction()*(mShiftInactiveMarginTop-mActiveMarginTop);
+                animatedFraction = animation.getAnimatedFraction();
+                float change = animatedFraction*(mShiftInactiveMarginTop-mActiveMarginTop);
+
                 if(isSelected){
-                    rectF.set(animatedValue/2-mIconSize/2,(mShiftInactiveMarginTop-change),animatedValue/2+mIconSize/2,(mShiftInactiveMarginTop-change)+mIconSize);
+                    rectF.set(animatedValue/2-mIconSizeWidth/2,(mShiftInactiveMarginTop-change),animatedValue/2+mIconSizeWidth/2,(mShiftInactiveMarginTop-change)+mIconSizeHeight);
+                        //not work
+//                    mPaint.setTextSize(mActiveTextSize*animatedFraction);
                 }
                 else {
-                    rectF.set(animatedValue/2-mIconSize/2,(mActiveMarginTop+change),animatedValue/2+mIconSize/2,(mActiveMarginTop+change)+mIconSize);
+                    rectF.set(animatedValue/2-mIconSizeWidth/2,(mActiveMarginTop+change),animatedValue/2+mIconSizeWidth/2,(mActiveMarginTop+change)+mIconSizeHeight);
+//                    mPaint.setTextSize(mActiveTextSize-mActiveTextSize*animatedFraction);
                 }
 
                 ViewGroup.LayoutParams params = getLayoutParams();
