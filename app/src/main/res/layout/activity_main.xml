@@ -9,12 +9,31 @@
 
 <com.wakehao.bar.BottomNavigationBar
     android:id="@+id/bar"
-    app:switchMode="scale"
+    app:switchMode="still"
+    app:isSlide="true"
     app:menu="@menu/demo_menu"
-    app:selectedColor="#45C01A"
+    app:selectedColor="#46c01b"
+    app:unSelectedColor="#999999"
     android:layout_alignParentBottom="true"
     android:layout_width="match_parent"
     android:layout_height="56dp">
 
 </com.wakehao.bar.BottomNavigationBar>
+
+    <!--<com.wakehao.bar.BottomNavigationBar-->
+        <!--android:id="@+id/bar_2"-->
+        <!--app:switchMode="scale"-->
+        <!--app:menu="@menu/demo_menu"-->
+        <!--app:selectedColor="#45C01A"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="56dp">-->
+
+    <!--</com.wakehao.bar.BottomNavigationBar>-->
+
+    <android.support.v4.view.ViewPager
+        android:id="@+id/viewpager"
+        android:layout_above="@id/bar"
+
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"></android.support.v4.view.ViewPager>
 </RelativeLayout>

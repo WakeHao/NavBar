@@ -12,6 +12,8 @@
         <attr name="selectedColor" format="color"></attr>
         <attr name="unSelectedColor" format="color"></attr>
 
+        <attr name="isSlide" format="boolean"></attr>
+        <attr name="isShy" format="boolean"></attr>
         <!--<attr name="itemIconTint" format="color"></attr>-->
         <!--<attr name="itemTextColor" format="color"></attr>-->
     </declare-styleable>

@@ -15,6 +15,7 @@ import android.graphics.LightingColorFilter;
 import android.graphics.Paint;
 import android.graphics.PaintFlagsDrawFilter;
 import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -56,9 +57,9 @@ public class BottomNavigationItem extends View {
     private int activeItemWidth;
     private int inActiveItemWidth;
 
-//    private int mSelectedColor;
-//    private int mUnSelectedColor;
 
+    //是否开启滑动渐变效果
+    private boolean isSlide;
 
     public BottomNavigationItem(Context context) {
         this(context,null);
@@ -87,14 +88,54 @@ public class BottomNavigationItem extends View {
         if(mPosition==0&&mShiftedColor!=0) ((BottomNavigationBar) getParent().getParent()).setFirstItemBackgroundColor(mShiftedColor);
         if(mShiftedColor==0)setItemBackground(config.itemBackGroundRes);//recall onDraw()
         mBitmap= BitmapFactory.decodeResource(getResources(),iconRes);
+        initPaint();
         if(iconRes2_selected!=0){
             //change bitmap
             bitmap_selected=BitmapFactory.decodeResource(getResources(),iconRes2_selected);
+
+//            Bitmap outBitmap = Bitmap.createBitmap (bitmap_selected.getWidth(), bitmap_selected.getHeight() , bitmap_selected.getConfig());
+//            Canvas canvas = new Canvas(outBitmap);
+//            Paint paint = new Paint();
+//            paint.setColorFilter( new PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)) ;
+//            canvas.drawBitmap(bitmap_selected , 0, 0, paint) ;
+//            bitmap_selected=outBitmap;
+//            outBitmap.recycle();
+
+//            tintSelectedBitmap(bitmap_selected,Color.WHITE);
+//            bitmap_selected.eraseColor(Color.WHITE);
+            initSecondPaint();
+            if(isSelected){
+                mUnSelectedIconPaint.setColor(Color.TRANSPARENT);
+            }
+            else {
+                mSelectedIconPaint.setColor(Color.TRANSPARENT);
+            }
         }
-        initPaint();
+//        changeUnSelectedIconColorFilter(config.inActiveColor);
         init();
 
     }
+    
+    public void tintSelectedBitmap(){
+        Bitmap outBitmap = Bitmap.createBitmap (bitmap_selected.getWidth(), bitmap_selected.getHeight() , bitmap_selected.getConfig());
+        Canvas canvas = new Canvas(outBitmap);
+        Paint paint = new Paint();
+        paint.setColorFilter( new PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)) ;
+        canvas.drawBitmap(bitmap_selected , 0, 0, paint) ;
+        bitmap_selected.recycle();
+        bitmap_selected=outBitmap;
+    }
+
+    private void tintUnSelectedBitmap(){
+        Bitmap outBitmap = Bitmap.createBitmap (mBitmap.getWidth(), mBitmap.getHeight() , mBitmap.getConfig());
+        Canvas canvas = new Canvas(outBitmap);
+        Paint paint = new Paint();
+        paint.setColorFilter( new PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)) ;
+        canvas.drawBitmap(mBitmap , 0, 0, paint) ;
+        mBitmap.recycle();
+        mBitmap=outBitmap;
+    }
+
 
 
     public int getIconRes() {
@@ -153,18 +194,72 @@ public class BottomNavigationItem extends View {
         initDefaultOption();
     }
 
+    /*
+    0-->1 activeColor-->inActiveColor
+    1-->0 inActiveColor-->activeColor
+     */
+    public void textAlphaAnim(float positionOffset){
+        mPaint.setColor(BarUtils.getOffsetColor(positionOffset,config.activeColor,config.inActiveColor,10));
+        if(isRefresh)return;
+//        invalidate();
+    }
+
+    private void iconAlphaAnim(float positionOffset){
+        changeUnSelectedIconColorFilter(BarUtils.getIconColor(positionOffset, Color.TRANSPARENT, config.activeColor,Color.GRAY, 10));
+        changeSelectedIconColorFilter(BarUtils.getIconColor(positionOffset, config.activeColor, Color.TRANSPARENT, Color.TRANSPARENT, 10));
+//        invalidate();
+    }
+
+    private boolean flag;
+
+    public void alphaAnim(float positionOffset) {
+//        if(isSetCalled)return;
+        if(!config.isSlide)return;
+        if(!flag){
+            tintSelectedBitmap();
+            tintUnSelectedBitmap();
+            flag=true;
+        }
+        iconAlphaAnim(positionOffset);
+        textAlphaAnim(positionOffset);
+        invalidate();
+        if(isSelected&&positionOffset>=0.99){
+            setSelected(false);
+        }
+        else if(!isSelected&&positionOffset<=0.01){
+            setSelected(true);
+        }
+    }
+
+    //selected bitmap
+    private Paint mSelectedIconPaint;
+    //unSelected bitmap
+    private Paint mUnSelectedIconPaint;
+    private void initSecondPaint() {
+        if(mSelectedIconPaint==null){
+            mSelectedIconPaint=new Paint(Paint.ANTI_ALIAS_FLAG);
+
+            mSelectedIconPaint.setFilterBitmap(true);
+            mUnSelectedIconPaint=new Paint(Paint.ANTI_ALIAS_FLAG);
+            mUnSelectedIconPaint.setFilterBitmap(true);
+        }
+    }
+
+
     public static class Config
     {
         private int activeColor;
         private int inActiveColor;
         private int itemBackGroundRes;
         private int switchMode;
+        private boolean isSlide;
 
         public Config(Build build) {
             activeColor=build.activeColor;
             inActiveColor=build.inActiveColor;
             itemBackGroundRes=build.itemBackGroundRes;
             switchMode=build.switchMode;
+            isSlide=build.isSlide;
         }
 
         public int getSwitchMode() {
@@ -176,6 +271,7 @@ public class BottomNavigationItem extends View {
             private int inActiveColor;
             private int itemBackGroundRes;
             private int switchMode;
+            private boolean isSlide;
             public Build setActiveColor(int activeColor) {
                 this.activeColor = activeColor;
                 return this;
@@ -195,10 +291,17 @@ public class BottomNavigationItem extends View {
                 this.switchMode = switchMode;
                 return this;
             }
+
+            public Build setIsSlide(boolean isSlide) {
+                this.isSlide = isSlide;
+                return this;
+            }
+
             public Config build()
             {
                 return new Config(this);
             }
+
 
         }
     }
@@ -208,10 +311,33 @@ public class BottomNavigationItem extends View {
         this.config=config;
     }
 
+    public void setSelected(boolean isSelected,boolean isSlide){
+
+        this.isSelected=isSelected;
+        return;
+    }
+
+    private boolean isSetCalled;
     private boolean isSelected;
     public void setSelected(boolean isSelected){
+        isSetCalled=true;
         this.isSelected=isSelected;
         changeColor(isSelected?config.activeColor:config.inActiveColor);
+        if(config.isSlide){
+            if(!flag){
+                tintSelectedBitmap();
+                tintUnSelectedBitmap();
+                flag=true;
+            }
+            if(isSelected){
+                changeSelectedIconColorFilter(config.activeColor);
+                mUnSelectedIconPaint.setColor(Color.TRANSPARENT);
+            }
+            else {
+                changeUnSelectedIconColorFilter(config.inActiveColor);
+                mSelectedIconPaint.setColor(Color.TRANSPARENT);
+            }
+        }
         switch (config.getSwitchMode()){
             case 0:
                 scaleAnim();
@@ -223,6 +349,7 @@ public class BottomNavigationItem extends View {
                 invalidate();
                 break;
         }
+
     }
 
 
@@ -266,10 +393,10 @@ public class BottomNavigationItem extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 //        canvas.setDrawFilter(new PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG));
-        if(paintFlagsDrawFilter==null){
-            paintFlagsDrawFilter= new PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
-            canvas.setDrawFilter(paintFlagsDrawFilter);
-        }
+//        if(paintFlagsDrawFilter==null){
+//            paintFlagsDrawFilter= new PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
+//            canvas.setDrawFilter(paintFlagsDrawFilter);
+//        }
         if(initFinished){
             switch (config.getSwitchMode()){
                 case 0:
@@ -296,7 +423,18 @@ public class BottomNavigationItem extends View {
 
     private void drawStillIcon(Canvas canvas) {
         rectF.set(getWidth()/2-mIconSizeWidth/2,mActiveMarginTop,getWidth()/2+mIconSizeWidth/2,mActiveMarginTop+mIconSizeHeight);
+        if(config.isSlide&&iconRes2_selected!=0){
+            canvas.drawBitmap(mBitmap, rect, rectF, mUnSelectedIconPaint);
+            canvas.drawBitmap(bitmap_selected, rect, rectF, mSelectedIconPaint);
+            return;
+        }
+        if(iconRes2_selected!=0){
+            if(isSelected) canvas.drawBitmap(bitmap_selected, rect, rectF, mPaint);
+            else  canvas.drawBitmap(mBitmap, rect, rectF, mPaint);
+            return;
+        }
         canvas.drawBitmap(mBitmap, rect, rectF, mPaint);
+
     }
 
     private void init() {
@@ -351,6 +489,7 @@ public class BottomNavigationItem extends View {
             return;
         }
         updateTextPaint(mPosition==0?mActiveTextSize:mInactiveTextSize);
+
         canvas.drawText(title,getWidth()/2-textRect.width()/2,BarUtils.dip2px(getContext(),46),mPaint);
     }
 
@@ -419,8 +558,10 @@ public class BottomNavigationItem extends View {
 
     private void initPaint() {
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mPaint.setFilterBitmap(true);
 //        mPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
         mPaint.setTextSize(mPosition==0?mActiveTextSize:mInactiveTextSize);
+
     }
 
 
@@ -432,15 +573,32 @@ public class BottomNavigationItem extends View {
 
 
     private void changeColor(@ColorInt int color) {
+
         if(iconRes2_selected!=0){
             mPaint.setColor(color);
             return;
         }
+
         ColorFilter filter = new LightingColorFilter(color, 1);
         mPaint.setColorFilter(filter);
         mPaint.setColor(color);
     }
+//    ColorFilter filter;
+    private void changeUnSelectedIconColorFilter(@ColorInt int color){
 
+        ColorFilter filter = new LightingColorFilter(color, 1);
+        mUnSelectedIconPaint.setColorFilter(filter);
+//        mUnSelectedIconPaint.setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN));
+        mUnSelectedIconPaint.setColor(color);
+    }
+    private void changeSelectedIconColorFilter(int color){
+
+
+        ColorFilter filter = new LightingColorFilter(color, 1);
+        mSelectedIconPaint.setColorFilter(filter);
+//        mSelectedIconPaint.setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN));
+        mSelectedIconPaint.setColor(color);
+    }
     public void translateAnim(){
         ValueAnimator valueAnimator;
         if(isSelected){

@@ -43,6 +43,8 @@ public class BottomNavigationBar extends FrameLayout{
     private View circleView;
     private int activeColor;
     private int inActiveColor;
+    private boolean isSlide;
+    private boolean isShy;
 
 
     public BottomNavigationBar(Context context) {
@@ -55,6 +57,7 @@ public class BottomNavigationBar extends FrameLayout{
 
     public BottomNavigationBar(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+
 
 
         TypedArray typedArray=context.obtainStyledAttributes(
@@ -76,7 +79,8 @@ public class BottomNavigationBar extends FrameLayout{
         itemBackGroundRes = typedArray.getResourceId(R.styleable.BottomNavigationBar_itemBackground, 0);
         activeColor = typedArray.getColor(R.styleable.BottomNavigationBar_selectedColor, BarUtils.getAppColorPrimary(context));
         inActiveColor = typedArray.getColor(R.styleable.BottomNavigationBar_unSelectedColor, Color.GRAY);
-
+        isSlide=typedArray.getBoolean(R.styleable.BottomNavigationBar_isSlide,false);
+        isShy=typedArray.getBoolean(R.styleable.BottomNavigationBar_isShy,false);
 
         if(typedArray.hasValue(R.styleable.BottomNavigationBar_menu)){
             ItemParser parser=new ItemParser(context,getDefaultConfig());
@@ -118,6 +122,7 @@ public class BottomNavigationBar extends FrameLayout{
                 .setSwitchMode(mSwitchMode)
                 .setActiveColor(activeColor)
                 .setInActiveColor(inActiveColor)
+                .setIsSlide(isSlide)
                 .build();
     }
 
@@ -213,6 +218,10 @@ public class BottomNavigationBar extends FrameLayout{
         }
     }
 
+    public void startAlphaAnim(int position, float positionOffset) {
+        ((BottomNavigationBarContent) getChildAt(0)).startAlphaAnim(position,positionOffset);
+    }
+
 
     public interface OnNavigationItemSelectedListener {
 
@@ -224,4 +233,8 @@ public class BottomNavigationBar extends FrameLayout{
         mBottomNavigationBarContent.injectListener(listener);
     }
 
+
+    public void setItemSelected(int position){
+        ((BottomNavigationBarContent) getChildAt(0)).setItemSelected(position);
+    }
 }

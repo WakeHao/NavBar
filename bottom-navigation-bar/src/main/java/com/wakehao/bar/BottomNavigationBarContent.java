@@ -32,6 +32,7 @@ public class BottomNavigationBarContent extends LinearLayout {
     private int[] widthSpec;
     private int mSwitchMode;
 
+    private int items;
 
     public BottomNavigationBarContent(Context context) {
         this(context,null);
@@ -73,7 +74,7 @@ public class BottomNavigationBarContent extends LinearLayout {
 
     }
 
-    private void setItemSelected(int position) {
+    public void setItemSelected(int position) {
         if(mActivePosition==position)return;
         int shiftedColor = ((BottomNavigationItem) getChildAt(position)).getShiftedColor();
         if(shiftedColor!=0){
@@ -85,7 +86,6 @@ public class BottomNavigationBarContent extends LinearLayout {
             final BottomNavigationItem item = (BottomNavigationItem) getChildAt(i);
             item.setSelected(i==position?true:false);
         }
-
     }
 
 
@@ -107,8 +107,6 @@ public class BottomNavigationBarContent extends LinearLayout {
 //        if(event.getAction()==MotionEvent.ACTION_DOWN){
 //            downX=event.getRawX();
 //            downY=event.getRawY();
-//            Log.i("test","downX:"+downX);
-//            Log.i("test","downY:"+downY);
 //        }
 //        return super.onTouchEvent(event);
 //    }
@@ -178,5 +176,18 @@ public class BottomNavigationBarContent extends LinearLayout {
     public BottomNavigationBarContent setSwitchMode(int mSwitchMode) {
         this.mSwitchMode = mSwitchMode;
         return this;
+    }
+
+    public void startAlphaAnim(int position, float positionOffset) {
+        //right 0-->1
+//        if(isRight){
+//            ((BottomNavigationItem) getChildAt(position)).alphaAnim(positionOffset);
+//            ((BottomNavigationItem) getChildAt(position+1)).alphaAnim(1-positionOffset);
+//        }else {//left 1-->0
+//            ((BottomNavigationItem) getChildAt(position+1)).alphaAnim(1-positionOffset);
+//            ((BottomNavigationItem) getChildAt(position)).alphaAnim(positionOffset);
+//        }
+        ((BottomNavigationItem) getChildAt(position)).alphaAnim(positionOffset);
+        ((BottomNavigationItem) getChildAt(position+1)).alphaAnim(1-positionOffset);
     }
 }
