@@ -44,9 +44,9 @@ public class BottomNavigationItem extends View {
     private @ColorInt int mShiftedColor;
     private boolean initFinished;
     private Paint mPaint;
-    private final int mActiveMarginTop;
+    public final int mActiveMarginTop;
     private final int mScaleInactiveMarginTop;
-    private final int mShiftInactiveMarginTop;
+    public final int mShiftInactiveMarginTop;
     private final int mActiveMarginBottom;
     private final int mIconSize;
     private final int mActiveTextSize;
@@ -57,9 +57,7 @@ public class BottomNavigationItem extends View {
     private int activeItemWidth;
     private int inActiveItemWidth;
 
-
-    //是否开启滑动渐变效果
-    private boolean isSlide;
+    public float currentMarginTop;
 
     public BottomNavigationItem(Context context) {
         this(context,null);
@@ -92,17 +90,6 @@ public class BottomNavigationItem extends View {
         if(iconRes2_selected!=0){
             //change bitmap
             bitmap_selected=BitmapFactory.decodeResource(getResources(),iconRes2_selected);
-
-//            Bitmap outBitmap = Bitmap.createBitmap (bitmap_selected.getWidth(), bitmap_selected.getHeight() , bitmap_selected.getConfig());
-//            Canvas canvas = new Canvas(outBitmap);
-//            Paint paint = new Paint();
-//            paint.setColorFilter( new PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)) ;
-//            canvas.drawBitmap(bitmap_selected , 0, 0, paint) ;
-//            bitmap_selected=outBitmap;
-//            outBitmap.recycle();
-
-//            tintSelectedBitmap(bitmap_selected,Color.WHITE);
-//            bitmap_selected.eraseColor(Color.WHITE);
             initSecondPaint();
             if(isSelected){
                 mUnSelectedIconPaint.setColor(Color.TRANSPARENT);
@@ -113,7 +100,9 @@ public class BottomNavigationItem extends View {
         }
 //        changeUnSelectedIconColorFilter(config.inActiveColor);
         init();
-
+        if(config.isSlide&&iconRes2_selected==0){
+            throw new RuntimeException("you need provide 2 pictures in Slide mode at least");
+        }
     }
     
     public void tintSelectedBitmap(){
@@ -200,7 +189,6 @@ public class BottomNavigationItem extends View {
      */
     public void textAlphaAnim(float positionOffset){
         mPaint.setColor(BarUtils.getOffsetColor(positionOffset,config.activeColor,config.inActiveColor,10));
-        if(isRefresh)return;
 //        invalidate();
     }
 
@@ -211,10 +199,16 @@ public class BottomNavigationItem extends View {
     }
 
     private boolean flag;
-
+    private boolean isSliding;
+    private float positionOffset;
     public void alphaAnim(float positionOffset) {
-//        if(isSetCalled)return;
+        if(config.switchMode!=1) {
+            if (Math.abs(positionOffset - this.positionOffset) <= 0.05) return;
+            this.positionOffset = positionOffset;
+        }
+        isSliding=true;
         if(!config.isSlide)return;
+        //TODO 在点击的时候也需要将图片换底色
         if(!flag){
             tintSelectedBitmap();
             tintUnSelectedBitmap();
@@ -222,14 +216,58 @@ public class BottomNavigationItem extends View {
         }
         iconAlphaAnim(positionOffset);
         textAlphaAnim(positionOffset);
-        invalidate();
+
+
+        //scale mode scaled by positionOffse3t
+        if(config.switchMode==0){
+            //marginTop 6-->8区间渐变
+            rectF.set(getWidth()/2-mIconSizeWidth/2,getScaledY(positionOffset),getWidth()/2+mIconSizeWidth/2,getScaledY(positionOffset)+mIconSizeHeight);
+            updateTextPaint(getScaledSp(positionOffset));
+            correctDotViewPosition((int) getScaledY(positionOffset));
+        }
+        else if(config.switchMode==1){
+            //width activeItemWidth-->InActiveItemWidth区间渐变
+
+
+            rectF.set(getWidth()/2-mIconSizeWidth/2,mActiveMarginTop+(mShiftInactiveMarginTop-mActiveMarginTop)*positionOffset,getWidth()/2+mIconSizeWidth/2,mActiveMarginTop+(mShiftInactiveMarginTop-mActiveMarginTop)*positionOffset+mIconSizeHeight);
+            //14sp->0
+            updateTextPaint(mActiveTextSize *(1-positionOffset));
+            ((BottomNavigationItemWithDot) getParent()).setDotTop((int) (mActiveMarginTop+(mShiftInactiveMarginTop-mActiveMarginTop)*positionOffset));
+            updateItemWidth(activeItemWidth-(activeItemWidth-inActiveItemWidth)*positionOffset);
+//            correctDotViewPosition((int) (mActiveMarginTop+(mShiftInactiveMarginTop-mActiveMarginTop)*positionOffset));
+        }
+
         if(isSelected&&positionOffset>=0.99){
-            setSelected(false);
+            setSelected(false,false);
+            return;
         }
         else if(!isSelected&&positionOffset<=0.01){
-            setSelected(true);
+            setSelected(true,false);
+            return;
         }
+        invalidate();
     }
+
+    /**
+     * 校正小红点的位置
+     * @param top
+     */
+    public void correctDotViewPosition(int top) {
+        ((BottomNavigationItemWithDot) getParent()).correctDotViewPosition(top);
+    }
+
+
+
+    //6dp-->8dp
+    private float  getScaledY(float offset){
+        return  (mActiveMarginTop+(mScaleInactiveMarginTop-mActiveMarginTop)*offset);
+    }
+
+    //14sp->12sp
+    private float getScaledSp(float offset){
+        return mActiveTextSize-(mActiveTextSize-mInactiveTextSize)*offset;
+    }
+
 
     //selected bitmap
     private Paint mSelectedIconPaint;
@@ -302,7 +340,6 @@ public class BottomNavigationItem extends View {
                 return new Config(this);
             }
 
-
         }
     }
 
@@ -311,16 +348,30 @@ public class BottomNavigationItem extends View {
         this.config=config;
     }
 
-    public void setSelected(boolean isSelected,boolean isSlide){
-
+    public void setSelected(boolean isSelected,boolean isAnim){
         this.isSelected=isSelected;
-        return;
+        if(isSelected)((BottomNavigationBarContent) getParent().getParent()).updatePosition(mPosition);
+        changeColor(isSelected?config.activeColor:config.inActiveColor);
+        if(config.isSlide){
+            if(!flag){
+                tintSelectedBitmap();
+                tintUnSelectedBitmap();
+                flag=true;
+            }
+            if(isSelected){
+                changeSelectedIconColorFilter(config.activeColor);
+                mUnSelectedIconPaint.setColor(Color.TRANSPARENT);
+            }
+            else {
+                changeUnSelectedIconColorFilter(config.inActiveColor);
+                mSelectedIconPaint.setColor(Color.TRANSPARENT);
+            }
+        }
+        invalidate();
     }
 
-    private boolean isSetCalled;
     private boolean isSelected;
     public void setSelected(boolean isSelected){
-        isSetCalled=true;
         this.isSelected=isSelected;
         changeColor(isSelected?config.activeColor:config.inActiveColor);
         if(config.isSlide){
@@ -330,6 +381,7 @@ public class BottomNavigationItem extends View {
                 flag=true;
             }
             if(isSelected){
+
                 changeSelectedIconColorFilter(config.activeColor);
                 mUnSelectedIconPaint.setColor(Color.TRANSPARENT);
             }
@@ -355,12 +407,14 @@ public class BottomNavigationItem extends View {
 
     private float scaleFraction;
     private void scaleAnim() {
+        isSliding=false;
         final ValueAnimator scaleAnimator;
         if(isSelected){
             scaleAnimator=ValueAnimator.ofFloat(mScaleInactiveMarginTop,mActiveMarginTop);
         }
         else {
-            if(mPaint.getTextSize()==mInactiveTextSize)return;
+//            if(mPaint.getTextSize()==mInactiveTextSize)return;
+            if(Math.abs(mPaint.getTextSize()-mInactiveTextSize)<1)return;
             scaleAnimator=ValueAnimator.ofFloat(mActiveMarginTop,mScaleInactiveMarginTop);
         }
         scaleAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -370,12 +424,22 @@ public class BottomNavigationItem extends View {
                 scaleFraction=animation.getAnimatedFraction();
                 float change=scaleFraction*(mScaleInactiveMarginTop-mActiveMarginTop);
                 if(isSelected){
-                    rectF.set(getWidth()/2-mIconSizeWidth/2,mScaleInactiveMarginTop-change,getWidth()/2+mIconSizeWidth/2,mScaleInactiveMarginTop-change+mIconSizeHeight);
+                    currentMarginTop=mScaleInactiveMarginTop-change;
+                    rectF.set(getWidth()/2-mIconSizeWidth/2,currentMarginTop,getWidth()/2+mIconSizeWidth/2,currentMarginTop+mIconSizeHeight);
                 }
                 else {
-                    rectF.set(getWidth()/2-mIconSizeWidth/2,mActiveMarginTop+change,getWidth()/2+mIconSizeWidth/2,mActiveMarginTop+change+mIconSizeHeight);
+                    currentMarginTop=mActiveMarginTop+change;
+                    rectF.set(getWidth()/2-mIconSizeWidth/2,currentMarginTop,getWidth()/2+mIconSizeWidth/2,currentMarginTop+mIconSizeHeight);
                 }
+                ((BottomNavigationItemWithDot) getParent()).correctDotViewPosition((int) currentMarginTop);
                 invalidate();
+            }
+        });
+        scaleAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+//                isRefresh=false;
             }
         });
         scaleAnimator.setDuration(ACTIVE_ANIMATION_DURATION_MS);
@@ -388,15 +452,9 @@ public class BottomNavigationItem extends View {
         ViewCompat.setBackground(this, backgroundDrawable);
     }
 
-    PaintFlagsDrawFilter paintFlagsDrawFilter;
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-//        canvas.setDrawFilter(new PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG));
-//        if(paintFlagsDrawFilter==null){
-//            paintFlagsDrawFilter= new PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
-//            canvas.setDrawFilter(paintFlagsDrawFilter);
-//        }
         if(initFinished){
             switch (config.getSwitchMode()){
                 case 0:
@@ -440,7 +498,6 @@ public class BottomNavigationItem extends View {
     private void init() {
         if (textRect == null) {
             textRect = new Rect();
-            mPaint.getTextBounds(title, 0, title.length(), textRect);
         }
 
         if(rect==null){
@@ -477,6 +534,12 @@ public class BottomNavigationItem extends View {
         mPaint.getTextBounds(title, 0, title.length(), textRect);
     }
     private void drawScaledText(Canvas canvas) {
+
+        if(config.isSlide&&isSliding){
+            canvas.drawText(title,getWidth()/2-textRect.width()/2,BarUtils.dip2px(getContext(),46),mPaint);
+            return;
+        }
+
         if(isRefresh){
             if(isSelected){
                 updateTextPaint(mInactiveTextSize+(mActiveTextSize-mInactiveTextSize)*scaleFraction);
@@ -496,29 +559,47 @@ public class BottomNavigationItem extends View {
     private float mIconSizeWidth;
     private float mIconSizeHeight;
 
+
+
     private void drawScaledIcon(Canvas canvas) {
+
+        //点击scaleAnim动画
         if(isRefresh){
             if(iconRes2_selected!=0){
-                canvas.drawBitmap(isSelected?bitmap_selected:mBitmap, rect, rectF, mPaint);
+//                canvas.drawBitmap(isSelected?bitmap_selected:mBitmap, rect, rectF, mPaint);
+                canvas.drawBitmap(mBitmap, rect, rectF, mUnSelectedIconPaint);
+                canvas.drawBitmap(bitmap_selected, rect, rectF, mSelectedIconPaint);
                 return;
             }
             canvas.drawBitmap(mBitmap, rect, rectF, mPaint);
             return;
         }
-        if(isSelected){
-            rectF.set(getWidth()/2-mIconSizeWidth/2,mActiveMarginTop,getWidth()/2+mIconSizeWidth/2,mActiveMarginTop+mIconSizeHeight);
 
-            if(iconRes2_selected!=0){
-                canvas.drawBitmap(bitmap_selected, rect, rectF, mPaint);
-                return;
+        //第一次设置初始rectF的值
+        if(rectF.isEmpty()){
+            if(isSelected){
+                currentMarginTop=mActiveMarginTop;
+                rectF.set(getWidth()/2-mIconSizeWidth/2,mActiveMarginTop,getWidth()/2+mIconSizeWidth/2,mActiveMarginTop+mIconSizeHeight);
             }
-
+            else {
+                currentMarginTop=mScaleInactiveMarginTop;
+                rectF.set(getWidth()/2-mIconSizeWidth/2,mScaleInactiveMarginTop,getWidth()/2+mIconSizeWidth/2,mScaleInactiveMarginTop+mIconSizeHeight);
+            }
         }
-        else {
-            rectF.set(getWidth()/2-mIconSizeWidth/2,mScaleInactiveMarginTop,getWidth()/2+mIconSizeWidth/2,mScaleInactiveMarginTop+mIconSizeHeight);
 
+        //页面偏移
+        if(config.isSlide&&iconRes2_selected!=0){
+            canvas.drawBitmap(mBitmap, rect, rectF, mUnSelectedIconPaint);
+            canvas.drawBitmap(bitmap_selected, rect, rectF, mSelectedIconPaint);
+            return;
+        }
+        if(iconRes2_selected!=0){
+            if(isSelected) canvas.drawBitmap(bitmap_selected, rect, rectF, mPaint);
+            else  canvas.drawBitmap(mBitmap, rect, rectF, mPaint);
+            return;
         }
         canvas.drawBitmap(mBitmap, rect, rectF, mPaint);
+
     }
 
     private void drawShiftedText(Canvas canvas) {
@@ -527,33 +608,68 @@ public class BottomNavigationItem extends View {
 //                mPaint.setTextSize(mActiveTextSize * animatedFraction);
                 updateTextPaint(mActiveTextSize * animatedFraction);
             } else {
+                // TODO FIXERROR
 //                mPaint.setTextSize(mActiveTextSize - mActiveTextSize * animatedFraction);
                 updateTextPaint(mActiveTextSize - mActiveTextSize * animatedFraction);
             }
             canvas.drawText(title, getWidth() / 2 - textRect.width() / 2, BarUtils.dip2px(getContext(), 46), mPaint);
             return;
         }
+        if(mPosition!=0&&textRect.isEmpty()){
 
-        if (mPosition == 0) {
-            canvas.drawText(title, getWidth() / 2 - textRect.width() / 2, BarUtils.dip2px(getContext(), 46), mPaint);
+            return;
         }
+        if(textRect.isEmpty())mPaint.getTextBounds(title, 0, title.length(), textRect);
+        canvas.drawText(title, getWidth() / 2 - textRect.width() / 2, BarUtils.dip2px(getContext(), 46), mPaint);
+//        if (mPosition == 0) {
+//            canvas.drawText(title, getWidth() / 2 - textRect.width() / 2, BarUtils.dip2px(getContext(), 46), mPaint);
+//        }
+//        if(config.isSlide&&isSliding){
+//            canvas.drawText(title,getWidth()/2-textRect.width()/2,BarUtils.dip2px(getContext(),46),mPaint);
+////            return
+//        }
+
+
     }
 
 
     private void drawShiftedIcon(Canvas canvas) {
+
+        //点击shiftAnim动画
         if(isRefresh){
+            if(iconRes2_selected!=0){
+//                canvas.drawBitmap(isSelected?bitmap_selected:mBitmap, rect, rectF, mPaint);
+                canvas.drawBitmap(mBitmap, rect, rectF, mUnSelectedIconPaint);
+                canvas.drawBitmap(bitmap_selected, rect, rectF, mSelectedIconPaint);
+                return;
+            }
             canvas.drawBitmap(mBitmap, rect, rectF, mPaint);
             return;
         }
 
-        if(mPosition==0){
-            rectF.set(getWidth()/2-mIconSizeWidth/2,mActiveMarginTop,getWidth()/2+mIconSizeWidth/2,mActiveMarginTop+mIconSizeHeight);
-        }
-        else {
-            rectF.set(getWidth()/2-mIconSizeWidth/2,mShiftInactiveMarginTop,getWidth()/2+mIconSizeWidth/2,mShiftInactiveMarginTop+mIconSizeHeight);
+        //第一次设置初始rectF的值
+        if(rectF.isEmpty()) {
+            if (isSelected) {
+                rectF.set(getWidth() / 2 - mIconSizeWidth / 2, mActiveMarginTop, getWidth() / 2 + mIconSizeWidth / 2, mActiveMarginTop + mIconSizeHeight);
+            } else {
+                rectF.set(getWidth() / 2 - mIconSizeWidth / 2, mShiftInactiveMarginTop, getWidth() / 2 + mIconSizeWidth / 2, mShiftInactiveMarginTop + mIconSizeHeight);
+            }
         }
 
+
+        //页面偏移
+        if(config.isSlide&&iconRes2_selected!=0){
+            canvas.drawBitmap(mBitmap, rect, rectF, mUnSelectedIconPaint);
+            canvas.drawBitmap(bitmap_selected, rect, rectF, mSelectedIconPaint);
+            return;
+        }
+        if(iconRes2_selected!=0){
+            if(isSelected) canvas.drawBitmap(bitmap_selected, rect, rectF, mPaint);
+            else  canvas.drawBitmap(mBitmap, rect, rectF, mPaint);
+            return;
+        }
         canvas.drawBitmap(mBitmap, rect, rectF, mPaint);
+
     }
 
     private void initPaint() {
@@ -585,7 +701,6 @@ public class BottomNavigationItem extends View {
     }
 //    ColorFilter filter;
     private void changeUnSelectedIconColorFilter(@ColorInt int color){
-
         ColorFilter filter = new LightingColorFilter(color, 1);
         mUnSelectedIconPaint.setColorFilter(filter);
 //        mUnSelectedIconPaint.setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN));
@@ -593,20 +708,20 @@ public class BottomNavigationItem extends View {
     }
     private void changeSelectedIconColorFilter(int color){
 
-
         ColorFilter filter = new LightingColorFilter(color, 1);
         mSelectedIconPaint.setColorFilter(filter);
 //        mSelectedIconPaint.setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN));
         mSelectedIconPaint.setColor(color);
     }
     public void translateAnim(){
+        isSliding=false;
         ValueAnimator valueAnimator;
         if(isSelected){
             valueAnimator=ValueAnimator.ofFloat(inActiveItemWidth,activeItemWidth);
         }
         else {
-            //宽度没改变的不执行动画
-            if(inActiveItemWidth==getWidth()||Math.abs(getWidth()-inActiveItemWidth)<=1)return;
+            //宽度没改变的不执行动画 TODO 10这个数值大小可能会有所变更
+            if(inActiveItemWidth==getWidth()||Math.abs(getWidth()-inActiveItemWidth)<=10)return;
             valueAnimator=ValueAnimator.ofFloat(getWidth(),inActiveItemWidth);
         }
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -620,20 +735,18 @@ public class BottomNavigationItem extends View {
                     rectF.set(animatedValue/2-mIconSizeWidth/2,(mShiftInactiveMarginTop-change),animatedValue/2+mIconSizeWidth/2,(mShiftInactiveMarginTop-change)+mIconSizeHeight);
                         //not work
 //                    mPaint.setTextSize(mActiveTextSize*animatedFraction);
+                    ((BottomNavigationItemWithDot) getParent()).setDotTop((int) (mShiftInactiveMarginTop-change));
                 }
                 else {
                     rectF.set(animatedValue/2-mIconSizeWidth/2,(mActiveMarginTop+change),animatedValue/2+mIconSizeWidth/2,(mActiveMarginTop+change)+mIconSizeHeight);
 //                    mPaint.setTextSize(mActiveTextSize-mActiveTextSize*animatedFraction);
+                    ((BottomNavigationItemWithDot) getParent()).setDotTop((int)(mActiveMarginTop+change));
                 }
 
-                ViewGroup.LayoutParams params = getLayoutParams();
-                if (params == null) return;
 
-                params.width = Math.round((float) animation.getAnimatedValue());
-                setLayoutParams(params);
                 isRefresh=true;
 
-                invalidate();
+                updateItemWidth((float) animation.getAnimatedValue());
 
             }
         });
@@ -643,10 +756,17 @@ public class BottomNavigationItem extends View {
             @Override
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
-//                isRefresh=false;
+                isRefresh=false;
             }
         });
         valueAnimator.start();
     }
 
+    private void updateItemWidth(float currentWidth){
+        ViewGroup.LayoutParams params = getLayoutParams();
+        if (params == null) return;
+        params.width = Math.round(currentWidth);
+        setLayoutParams(params);
+        invalidate();
+    }
 }

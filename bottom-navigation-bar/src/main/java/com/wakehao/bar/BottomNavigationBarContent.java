@@ -64,6 +64,7 @@ public class BottomNavigationBarContent extends LinearLayout {
         mOnClickListener = new OnClickListener() {
             @Override
             public void onClick(View v) {
+//                BottomNavigationItem item = (BottomNavigationItem) ((BottomNavigationItemWithDot)v).getChildAt(0);
                 BottomNavigationItem item = (BottomNavigationItem) v;
                 //TODO :setFlag
                 if(mListener==null||(mListener!=null&&mListener.onNavigationItemSelected(item,item.getPosition()))){
@@ -74,20 +75,28 @@ public class BottomNavigationBarContent extends LinearLayout {
 
     }
 
+//    private BottomNavigationItem getBottomNavigationItem(){
+//        return
+//    }
+
+
     public void setItemSelected(int position) {
         if(mActivePosition==position)return;
-        int shiftedColor = ((BottomNavigationItem) getChildAt(position)).getShiftedColor();
+        int shiftedColor = ((BottomNavigationItem) ((BottomNavigationItemWithDot) getChildAt(position)).getChildAt(0)).getShiftedColor();
         if(shiftedColor!=0){
             ((BottomNavigationBar) getParent()).drawBackgroundCircle(shiftedColor,downX,downY);
         }
         mActivePosition=position;
         for(int i=0;i<getChildCount();i++)
         {
-            final BottomNavigationItem item = (BottomNavigationItem) getChildAt(i);
+            final BottomNavigationItem item = (BottomNavigationItem) ((BottomNavigationItemWithDot) getChildAt(i)).getChildAt(0);
             item.setSelected(i==position?true:false);
         }
     }
 
+    void updatePosition(int mActivePosition){
+        this.mActivePosition=mActivePosition;
+    }
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
@@ -158,7 +167,7 @@ public class BottomNavigationBarContent extends LinearLayout {
             LinearLayout.LayoutParams layoutParams=new LinearLayout.LayoutParams(
                     widthSpec[i],mBottomNavigationBarHeight);
             item.setLayoutParams(layoutParams);
-            addView(item);
+            addView(new BottomNavigationItemWithDot(getContext(),item));
 //            if(i==mActivePosition)setItemSelected(mActivePosition);
         }
     }
@@ -187,7 +196,7 @@ public class BottomNavigationBarContent extends LinearLayout {
 //            ((BottomNavigationItem) getChildAt(position+1)).alphaAnim(1-positionOffset);
 //            ((BottomNavigationItem) getChildAt(position)).alphaAnim(positionOffset);
 //        }
-        ((BottomNavigationItem) getChildAt(position)).alphaAnim(positionOffset);
-        ((BottomNavigationItem) getChildAt(position+1)).alphaAnim(1-positionOffset);
+        ((BottomNavigationItem) ((BottomNavigationItemWithDot) getChildAt(position)).getChildAt(0)).alphaAnim(positionOffset);
+        ((BottomNavigationItem) ((BottomNavigationItemWithDot) getChildAt(position+1)).getChildAt(0)).alphaAnim(1-positionOffset);
     }
 }

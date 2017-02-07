@@ -25,6 +25,8 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
+import com.wakehao.bar.dot.DotView;
+
 import java.util.List;
 
 /**
@@ -236,5 +238,10 @@ public class BottomNavigationBar extends FrameLayout{
 
     public void setItemSelected(int position){
         ((BottomNavigationBarContent) getChildAt(0)).setItemSelected(position);
+    }
+
+    public void showNum(int position,int num) {
+//        hasMesPoint = true;
+        ((BottomNavigationItemWithDot) ((BottomNavigationBarContent) getChildAt(0)).getChildAt(position)).showNum(num);
     }
 }

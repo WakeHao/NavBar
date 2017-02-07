@@ -75,5 +75,7 @@ public class MainActivity extends AppCompatActivity {
 
         viewpager.setAdapter(wePagerAdapter);
 
+        bar.showNum(1,80);
+        bar.showNum(0,7);
     }
 }

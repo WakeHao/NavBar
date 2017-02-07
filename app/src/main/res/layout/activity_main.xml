@@ -9,7 +9,7 @@
 
 <com.wakehao.bar.BottomNavigationBar
     android:id="@+id/bar"
-    app:switchMode="still"
+    app:switchMode="shift"
     app:isSlide="true"
     app:menu="@menu/demo_menu"
     app:selectedColor="#46c01b"
