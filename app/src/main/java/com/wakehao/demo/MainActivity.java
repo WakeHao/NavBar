@@ -31,7 +31,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
+//        R.id.viewpager
+//        viewpager = (ViewPager) this.findViewById(R.id.viewpager);
         bar = (BottomNavigationBar) findViewById(R.id.bar);
 
 //        bar.setBackgroundColor(testColor);
@@ -42,40 +43,43 @@ public class MainActivity extends AppCompatActivity {
 //            }
 //        });
 
-        viewpager = (ViewPager) findViewById(R.id.viewpager);
 
+//
+//
+//        viewpager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener(){
+//            @Override
+//            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+//                if(positionOffset>0){
+//                    bar.startAlphaAnim(position,positionOffset);
+//                }
+//            }
+//        });
+//        bar.setOnNavigationItemSelectedListener(new BottomNavigationBar.OnNavigationItemSelectedListener() {
+//            @Override
+//            public boolean onNavigationItemSelected(@NonNull BottomNavigationItem item, int selectedPosition) {
+//                viewpager.setCurrentItem(selectedPosition,false);
+//                return true;
+//            }
+//        });
+//
+//        WeChatHomeFragment weChatHomeFragment=new WeChatHomeFragment();
+//        WeChatContactFragment weChatContactFragment=new WeChatContactFragment();
+//        WeChatFindFragment weChatFindFragment=new WeChatFindFragment();
+//        WeChatMineFragment weChatMineFragment=new WeChatMineFragment();
+//
+//        List<Fragment> fragments=new ArrayList<>();
+//        fragments.add(weChatHomeFragment);
+//        fragments.add(weChatContactFragment);
+//        fragments.add(weChatFindFragment);
+//        fragments.add(weChatMineFragment);
+//        wePagerAdapter = new WePagerAdapter(getSupportFragmentManager(),fragments);
+//
+//        viewpager.setAdapter(wePagerAdapter);
+//
+////        bar.showNum(1,80);
+////        bar.showNum(0,7);
 
-        viewpager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener(){
-            @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-                if(positionOffset>0){
-                    bar.startAlphaAnim(position,positionOffset);
-                }
-            }
-        });
-        bar.setOnNavigationItemSelectedListener(new BottomNavigationBar.OnNavigationItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull BottomNavigationItem item, int selectedPosition) {
-                viewpager.setCurrentItem(selectedPosition,false);
-                return true;
-            }
-        });
-
-        WeChatHomeFragment weChatHomeFragment=new WeChatHomeFragment();
-        WeChatContactFragment weChatContactFragment=new WeChatContactFragment();
-        WeChatFindFragment weChatFindFragment=new WeChatFindFragment();
-        WeChatMineFragment weChatMineFragment=new WeChatMineFragment();
-
-        List<Fragment> fragments=new ArrayList<>();
-        fragments.add(weChatHomeFragment);
-        fragments.add(weChatContactFragment);
-        fragments.add(weChatFindFragment);
-        fragments.add(weChatMineFragment);
-        wePagerAdapter = new WePagerAdapter(getSupportFragmentManager(),fragments);
-
-        viewpager.setAdapter(wePagerAdapter);
-
-        bar.showNum(1,80);
-        bar.showNum(0,7);
     }
+
+
 }

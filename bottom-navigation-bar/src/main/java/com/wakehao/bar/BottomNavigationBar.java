@@ -3,6 +3,7 @@ package com.wakehao.bar;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
@@ -11,22 +12,32 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.os.Build;
+import android.os.Parcelable;
+import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewCompat;
+import android.support.v4.view.ViewPager;
+import android.support.v7.app.AppCompatActivity;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewAnimationUtils;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
 import com.wakehao.bar.dot.DotView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -47,7 +58,9 @@ public class BottomNavigationBar extends FrameLayout{
     private int inActiveColor;
     private boolean isSlide;
     private boolean isShy;
-
+    private @IdRes int containerId;
+    private int itemCounts;
+    private int viewpagerId;
 
     public BottomNavigationBar(Context context) {
         super(context,null);
@@ -59,7 +72,6 @@ public class BottomNavigationBar extends FrameLayout{
 
     public BottomNavigationBar(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-
 
 
         TypedArray typedArray=context.obtainStyledAttributes(
@@ -76,7 +88,14 @@ public class BottomNavigationBar extends FrameLayout{
                     this,typedArray.getDimensionPixelSize(R.styleable.BottomNavigationBar_barElevation,0));
         }
 
+        if(typedArray.hasValue(R.styleable.BottomNavigationBar_fragmentId)){
+            containerId=typedArray.getResourceId(R.styleable.BottomNavigationBar_fragmentId,0);
+        }
 
+        if(typedArray.hasValue(R.styleable.BottomNavigationBar_viewpagerId)){
+            viewpagerId = typedArray.getResourceId(R.styleable.BottomNavigationBar_viewpagerId,0);
+//            if(viewpagerId!=0)getBottomItem()
+        }
 
         itemBackGroundRes = typedArray.getResourceId(R.styleable.BottomNavigationBar_itemBackground, 0);
         activeColor = typedArray.getColor(R.styleable.BottomNavigationBar_selectedColor, BarUtils.getAppColorPrimary(context));
@@ -88,10 +107,11 @@ public class BottomNavigationBar extends FrameLayout{
             ItemParser parser=new ItemParser(context,getDefaultConfig());
             parser.parser(typedArray.getResourceId(R.styleable.BottomNavigationBar_menu,0));
             mBottomNavigationBarContent=new BottomNavigationBarContent(context);
+            itemCounts=parser.getItemCounts();
             mBottomNavigationBarContent.setSwitchMode(mSwitchMode).setItems(parser.getBottomNavigationItems());
             FrameLayout.LayoutParams layoutParams=new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER);
             addView(mBottomNavigationBarContent,layoutParams);
-            mBottomNavigationBarContent.finishInit(parser.getBottomNavigationItems());
+            mBottomNavigationBarContent.finishInit(parser.getBottomNavigationItems(),viewpagerId!=0);
         }
         else {
 
@@ -112,6 +132,57 @@ public class BottomNavigationBar extends FrameLayout{
             addView(circleView,layoutParams);
         }
 
+
+    }
+
+    protected boolean isMoving;
+    protected boolean isBackMoving;
+
+    public boolean getCanClick(){
+        return !isMoving&&!isBackMoving;
+    }
+    public void initViewPager(@IdRes int viewpagerId) {
+        ViewPager viewpager= (ViewPager) ((Activity) getContext()).findViewById(viewpagerId);
+        viewpager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener(){
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+                super.onPageScrolled(position, positionOffset, positionOffsetPixels);
+                if(positionOffset>0){
+//                    if(isMoving){
+                        startAlphaAnim(position,positionOffset);
+//                    }
+                }
+            }
+            @Override
+            public void onPageScrollStateChanged(int state) {
+                super.onPageScrollStateChanged(state);
+                switch (state){
+                    case 0:
+                        isMoving=false;
+                        isBackMoving=false;
+                        break;
+                    case 1:
+                        isMoving=true;
+                        isBackMoving=false;
+                        break;
+                    case 2:
+                        isMoving=false;
+                        isBackMoving=true;
+                        break;
+                }
+            }
+            @Override
+            public void onPageSelected(int position) {
+                super.onPageSelected(position);
+                if(isBackMoving){
+                    setItemSelected(position,false);
+                }
+            }
+        });
+
+        ((BottomNavigationBarContent) getChildAt(0)).setViewPager(viewpager);
+        PagerAdapter pagerAdapter=new PagerAdapter(((AppCompatActivity) getContext()).getSupportFragmentManager());
+        viewpager.setAdapter(pagerAdapter);
     }
 
     public void setFirstItemBackgroundColor(int shiftedColor){
@@ -149,7 +220,7 @@ public class BottomNavigationBar extends FrameLayout{
     }
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void drawHighVersionCircle(final int shiftedColor, int x, int y) {
-        Animator animator = ViewAnimationUtils.createCircularReveal(
+        final Animator animator = ViewAnimationUtils.createCircularReveal(
                 circleView,
                 x,
                 y,
@@ -168,6 +239,7 @@ public class BottomNavigationBar extends FrameLayout{
             }
 
             private void onEnd() {
+                animator.removeListener(this);
                 setBackgroundColor(shiftedColor);
                 circleView.setVisibility(View.INVISIBLE);
                 ViewCompat.setAlpha(circleView, 1);
@@ -225,6 +297,22 @@ public class BottomNavigationBar extends FrameLayout{
     }
 
 
+
+    @Override
+    protected void onFinishInflate() {
+        super.onFinishInflate();
+
+        getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+            @Override
+            public void onGlobalLayout() {
+                getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                if(viewpagerId!=0)initViewPager(viewpagerId);
+            }
+        });
+    }
+
+
     public interface OnNavigationItemSelectedListener {
 
         boolean onNavigationItemSelected(@NonNull BottomNavigationItem item,int selectedPosition);
@@ -232,16 +320,48 @@ public class BottomNavigationBar extends FrameLayout{
 
     public void setOnNavigationItemSelectedListener(
             @Nullable OnNavigationItemSelectedListener listener) {
+
         mBottomNavigationBarContent.injectListener(listener);
     }
 
 
-    public void setItemSelected(int position){
-        ((BottomNavigationBarContent) getChildAt(0)).setItemSelected(position);
+    public void setItemSelected(int position,boolean isAnim){
+        ((BottomNavigationBarContent) getChildAt(0)).setItemSelected(position,isAnim);
     }
 
     public void showNum(int position,int num) {
 //        hasMesPoint = true;
         ((BottomNavigationItemWithDot) ((BottomNavigationBarContent) getChildAt(0)).getChildAt(position)).showNum(num);
     }
+
+    public @IdRes int getContainerId(){
+        return containerId;
+    }
+
+    class PagerAdapter extends FragmentPagerAdapter{
+
+        public PagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            return getBottomItem(position).getFragment();
+        }
+
+        @Override
+        public int getCount() {
+            return itemCounts;
+        }
+
+
+
+    }
+
+    private BottomNavigationItem getBottomItem(int position){
+
+        return ((BottomNavigationItem) ((BottomNavigationItemWithDot) ((BottomNavigationBarContent) getChildAt(0)).getChildAt(position)).getChildAt(0));
+    }
+
+
 }

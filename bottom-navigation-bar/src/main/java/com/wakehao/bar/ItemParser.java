@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.XmlResourceParser;
 import android.graphics.Color;
 import android.support.annotation.XmlRes;
+import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
@@ -89,6 +90,11 @@ public class ItemParser {
                         if(shiftedColor!=null)item.setShiftedColor(shiftedColor);
                     }
                     break;
+                case "fragment":
+                    String attributeValue = parser.getAttributeValue(i);
+                    item.setFragment(attributeValue);
+
+                    break;
             }
         }
 
@@ -129,4 +135,7 @@ public class ItemParser {
         return items;
     }
 
+    public int getItemCounts(){
+        return items.size();
+    }
 }

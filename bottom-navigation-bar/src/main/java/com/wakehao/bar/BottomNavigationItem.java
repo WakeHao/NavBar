@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -20,13 +21,21 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
+import android.os.Looper;
+import android.os.Parcelable;
 import android.support.annotation.ColorInt;
 import android.support.annotation.DrawableRes;
+import android.support.annotation.IdRes;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
+import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -52,6 +61,7 @@ public class BottomNavigationItem extends View {
     private final int mActiveTextSize;
     private final int mInactiveTextSize;
 
+    private Fragment mFragment;
     private Bitmap mBitmap;
     private static final long ACTIVE_ANIMATION_DURATION_MS = 150L;
     private int activeItemWidth;
@@ -59,6 +69,7 @@ public class BottomNavigationItem extends View {
 
     public float currentMarginTop;
 
+    private boolean isViewPager;
     public BottomNavigationItem(Context context) {
         this(context,null);
     }
@@ -82,7 +93,18 @@ public class BottomNavigationItem extends View {
 
     Bitmap bitmap_selected;
     private void initDefaultOption() {
-        if(mPosition==0)isSelected=true;
+        if(mPosition==0){
+            isSelected=true;
+            if(mFragment!=null&&!isViewPager){
+
+                if(!mFragment.isAdded())getActivity().getSupportFragmentManager().beginTransaction()
+                        .add(getContainerId(),mFragment,tag).commitAllowingStateLoss();
+                else {
+                    getActivity().getSupportFragmentManager().beginTransaction()
+                            .show(mFragment).commitAllowingStateLoss();
+                }
+            }
+        }
         if(mPosition==0&&mShiftedColor!=0) ((BottomNavigationBar) getParent().getParent()).setFirstItemBackgroundColor(mShiftedColor);
         if(mShiftedColor==0)setItemBackground(config.itemBackGroundRes);//recall onDraw()
         mBitmap= BitmapFactory.decodeResource(getResources(),iconRes);
@@ -103,30 +125,9 @@ public class BottomNavigationItem extends View {
         if(config.isSlide&&iconRes2_selected==0){
             throw new RuntimeException("you need provide 2 pictures in Slide mode at least");
         }
+
     }
     
-    public void tintSelectedBitmap(){
-        Bitmap outBitmap = Bitmap.createBitmap (bitmap_selected.getWidth(), bitmap_selected.getHeight() , bitmap_selected.getConfig());
-        Canvas canvas = new Canvas(outBitmap);
-        Paint paint = new Paint();
-        paint.setColorFilter( new PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)) ;
-        canvas.drawBitmap(bitmap_selected , 0, 0, paint) ;
-        bitmap_selected.recycle();
-        bitmap_selected=outBitmap;
-    }
-
-    private void tintUnSelectedBitmap(){
-        Bitmap outBitmap = Bitmap.createBitmap (mBitmap.getWidth(), mBitmap.getHeight() , mBitmap.getConfig());
-        Canvas canvas = new Canvas(outBitmap);
-        Paint paint = new Paint();
-        paint.setColorFilter( new PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)) ;
-        canvas.drawBitmap(mBitmap , 0, 0, paint) ;
-        mBitmap.recycle();
-        mBitmap=outBitmap;
-    }
-
-
-
     public int getIconRes() {
         return iconRes;
     }
@@ -181,7 +182,9 @@ public class BottomNavigationItem extends View {
     public void finishInit() {
         initFinished=true;
         initDefaultOption();
+
     }
+
 
     /*
     0-->1 activeColor-->inActiveColor
@@ -193,32 +196,29 @@ public class BottomNavigationItem extends View {
     }
 
     private void iconAlphaAnim(float positionOffset){
-        changeUnSelectedIconColorFilter(BarUtils.getIconColor(positionOffset, Color.TRANSPARENT, config.activeColor,Color.GRAY, 10));
+        changeUnSelectedIconColorFilter(BarUtils.getIconColor(positionOffset, Color.TRANSPARENT, config.activeColor,config.inActiveColor, 10));
         changeSelectedIconColorFilter(BarUtils.getIconColor(positionOffset, config.activeColor, Color.TRANSPARENT, Color.TRANSPARENT, 10));
 //        invalidate();
     }
 
-    private boolean flag;
     private boolean isSliding;
-    private float positionOffset;
     public void alphaAnim(float positionOffset) {
-        if(config.switchMode!=1) {
-            if (Math.abs(positionOffset - this.positionOffset) <= 0.05) return;
-            this.positionOffset = positionOffset;
-        }
+//        if(hasCorrected)return;
+//        if(config.switchMode!=1) {
+//            if (Math.abs(positionOffset - this.positionOffset) <= 0.05) return;
+//            this.positionOffset = positionOffset;
+//        }
+//        if((System.currentTimeMillis()-startTime)<100){
+//
+//            return;
+//        }
         isSliding=true;
         if(!config.isSlide)return;
         //TODO 在点击的时候也需要将图片换底色
-        if(!flag){
-            tintSelectedBitmap();
-            tintUnSelectedBitmap();
-            flag=true;
-        }
         iconAlphaAnim(positionOffset);
         textAlphaAnim(positionOffset);
 
-
-        //scale mode scaled by positionOffse3t
+        //scale mode scaled by positionOffset
         if(config.switchMode==0){
             //marginTop 6-->8区间渐变
             rectF.set(getWidth()/2-mIconSizeWidth/2,getScaledY(positionOffset),getWidth()/2+mIconSizeWidth/2,getScaledY(positionOffset)+mIconSizeHeight);
@@ -228,7 +228,6 @@ public class BottomNavigationItem extends View {
         else if(config.switchMode==1){
             //width activeItemWidth-->InActiveItemWidth区间渐变
 
-
             rectF.set(getWidth()/2-mIconSizeWidth/2,mActiveMarginTop+(mShiftInactiveMarginTop-mActiveMarginTop)*positionOffset,getWidth()/2+mIconSizeWidth/2,mActiveMarginTop+(mShiftInactiveMarginTop-mActiveMarginTop)*positionOffset+mIconSizeHeight);
             //14sp->0
             updateTextPaint(mActiveTextSize *(1-positionOffset));
@@ -236,17 +235,63 @@ public class BottomNavigationItem extends View {
             updateItemWidth(activeItemWidth-(activeItemWidth-inActiveItemWidth)*positionOffset);
 //            correctDotViewPosition((int) (mActiveMarginTop+(mShiftInactiveMarginTop-mActiveMarginTop)*positionOffset));
         }
-
-        if(isSelected&&positionOffset>=0.99){
-            setSelected(false,false);
+        //#onPageSelected() has been called when positionOffset was about 0.7&0.3
+        if(!isSelected&&positionOffset>=0.99){
+            correctItemData(false);
             return;
         }
-        else if(!isSelected&&positionOffset<=0.01){
-            setSelected(true,false);
+        else if(isSelected&&positionOffset<=0.01){
+            correctItemData(true);
             return;
         }
         invalidate();
     }
+
+   //TODO add 校正判断
+    private boolean isCallCorrect() {
+
+        return false;
+    }
+
+    public void correctItemData(boolean isSelected){
+        this.isSelected=isSelected;
+        if(isSelected){
+            if(config.switchMode==2){
+                changeColor(config.activeColor);
+                changeSelectedIconColorFilter(config.activeColor);
+                mUnSelectedIconPaint.setColor(Color.TRANSPARENT);
+                return;
+            }
+            if(config.switchMode==1){
+                updateItemWidth(activeItemWidth);
+                updateTextPaint(mActiveTextSize);
+                rectF.set(activeItemWidth/2-mIconSizeWidth/2,mActiveMarginTop,activeItemWidth/2+mIconSizeWidth/2,mActiveMarginTop+mIconSizeHeight);
+            }
+            else {
+                updateTextPaint(mActiveTextSize);
+                rectF.set(activeItemWidth/2-mIconSizeWidth/2,mActiveMarginTop,activeItemWidth/2+mIconSizeWidth/2,mActiveMarginTop+mIconSizeHeight);
+            }
+        }
+        else {
+            if(config.switchMode==2){
+                changeColor(config.inActiveColor);
+                changeUnSelectedIconColorFilter(config.inActiveColor);
+                mSelectedIconPaint.setColor(Color.TRANSPARENT);
+                return;
+            }
+            if(config.switchMode==1){
+                updateItemWidth(inActiveItemWidth);
+                updateTextPaint(0);
+                rectF.set(inActiveItemWidth/2-mIconSizeWidth/2,mShiftInactiveMarginTop,mIconSizeWidth/2+inActiveItemWidth/2,mShiftInactiveMarginTop+mIconSizeHeight);
+            }
+            else {
+                updateTextPaint(mInactiveTextSize);
+                rectF.set(inActiveItemWidth/2-mIconSizeWidth/2,mScaleInactiveMarginTop,inActiveItemWidth/2+mIconSizeWidth/2,mScaleInactiveMarginTop+mIconSizeHeight);
+            }
+        }
+        setSelected(isSelected,false);
+    }
+
 
     /**
      * 校正小红点的位置
@@ -255,7 +300,6 @@ public class BottomNavigationItem extends View {
     public void correctDotViewPosition(int top) {
         ((BottomNavigationItemWithDot) getParent()).correctDotViewPosition(top);
     }
-
 
 
     //6dp-->8dp
@@ -267,7 +311,6 @@ public class BottomNavigationItem extends View {
     private float getScaledSp(float offset){
         return mActiveTextSize-(mActiveTextSize-mInactiveTextSize)*offset;
     }
-
 
     //selected bitmap
     private Paint mSelectedIconPaint;
@@ -282,7 +325,6 @@ public class BottomNavigationItem extends View {
             mUnSelectedIconPaint.setFilterBitmap(true);
         }
     }
-
 
     public static class Config
     {
@@ -348,17 +390,39 @@ public class BottomNavigationItem extends View {
         this.config=config;
     }
 
+//    public void setSelected(boolean isSelected,boolean isAnim){
+//        this.isSelected=isSelected;
+//        if(isSelected)((BottomNavigationBarContent) getParent().getParent()).updatePosition(mPosition);
+//        changeColor(isSelected?config.activeColor:config.inActiveColor);
+//        if(config.isSlide){
+//            if(isSelected){
+//                changeSelectedIconColorFilter(config.activeColor);
+//                mUnSelectedIconPaint.setColor(Color.TRANSPARENT);
+//            }
+//            else {
+//                changeUnSelectedIconColorFilter(config.inActiveColor);
+//                mSelectedIconPaint.setColor(Color.TRANSPARENT);
+//            }
+//        }
+//        updateView();
+//    }
+
+    private void updateView(){
+        if(Looper.myLooper()==Looper.getMainLooper()){
+            invalidate();
+        }
+        else {
+            postInvalidate();
+        }
+    }
+
+    private boolean isSelected;
     public void setSelected(boolean isSelected,boolean isAnim){
         this.isSelected=isSelected;
-        if(isSelected)((BottomNavigationBarContent) getParent().getParent()).updatePosition(mPosition);
         changeColor(isSelected?config.activeColor:config.inActiveColor);
         if(config.isSlide){
-            if(!flag){
-                tintSelectedBitmap();
-                tintUnSelectedBitmap();
-                flag=true;
-            }
             if(isSelected){
+
                 changeSelectedIconColorFilter(config.activeColor);
                 mUnSelectedIconPaint.setColor(Color.TRANSPARENT);
             }
@@ -367,28 +431,9 @@ public class BottomNavigationItem extends View {
                 mSelectedIconPaint.setColor(Color.TRANSPARENT);
             }
         }
-        invalidate();
-    }
-
-    private boolean isSelected;
-    public void setSelected(boolean isSelected){
-        this.isSelected=isSelected;
-        changeColor(isSelected?config.activeColor:config.inActiveColor);
-        if(config.isSlide){
-            if(!flag){
-                tintSelectedBitmap();
-                tintUnSelectedBitmap();
-                flag=true;
-            }
-            if(isSelected){
-
-                changeSelectedIconColorFilter(config.activeColor);
-                mUnSelectedIconPaint.setColor(Color.TRANSPARENT);
-            }
-            else {
-                changeUnSelectedIconColorFilter(config.inActiveColor);
-                mSelectedIconPaint.setColor(Color.TRANSPARENT);
-            }
+        if(!isAnim){
+            updateView();
+            return;
         }
         switch (config.getSwitchMode()){
             case 0:
@@ -402,8 +447,29 @@ public class BottomNavigationItem extends View {
                 break;
         }
 
+        if(!isViewPager)switchFragment(isSelected);
     }
 
+    private void switchFragment(boolean isSelected) {
+        if(mFragment==null)return;
+        FragmentTransaction fragmentTransaction = ((AppCompatActivity) getContext()).getSupportFragmentManager().beginTransaction();
+//        ((AppCompatActivity) getContext()).get
+
+        if(!isSelected){
+            if(mFragment.isAdded())fragmentTransaction.hide(mFragment);
+        }
+        else {
+            if(mFragment.isAdded())fragmentTransaction.show(mFragment);
+            else fragmentTransaction.add(getContainerId(),mFragment,tag);
+        }
+        fragmentTransaction.commitAllowingStateLoss();
+    }
+
+    private @IdRes int containerId;
+    private @IdRes int  getContainerId(){
+        if(containerId!=0)return containerId;
+        return containerId=((BottomNavigationBar) getParent().getParent().getParent()).getContainerId();
+    }
 
     private float scaleFraction;
     private void scaleAnim() {
@@ -562,7 +628,6 @@ public class BottomNavigationItem extends View {
 
 
     private void drawScaledIcon(Canvas canvas) {
-
         //点击scaleAnim动画
         if(isRefresh){
             if(iconRes2_selected!=0){
@@ -577,8 +642,10 @@ public class BottomNavigationItem extends View {
 
         //第一次设置初始rectF的值
         if(rectF.isEmpty()){
+
             if(isSelected){
                 currentMarginTop=mActiveMarginTop;
+
                 rectF.set(getWidth()/2-mIconSizeWidth/2,mActiveMarginTop,getWidth()/2+mIconSizeWidth/2,mActiveMarginTop+mIconSizeHeight);
             }
             else {
@@ -586,7 +653,6 @@ public class BottomNavigationItem extends View {
                 rectF.set(getWidth()/2-mIconSizeWidth/2,mScaleInactiveMarginTop,getWidth()/2+mIconSizeWidth/2,mScaleInactiveMarginTop+mIconSizeHeight);
             }
         }
-
         //页面偏移
         if(config.isSlide&&iconRes2_selected!=0){
             canvas.drawBitmap(mBitmap, rect, rectF, mUnSelectedIconPaint);
@@ -656,7 +722,6 @@ public class BottomNavigationItem extends View {
             }
         }
 
-
         //页面偏移
         if(config.isSlide&&iconRes2_selected!=0){
             canvas.drawBitmap(mBitmap, rect, rectF, mUnSelectedIconPaint);
@@ -679,8 +744,6 @@ public class BottomNavigationItem extends View {
         mPaint.setTextSize(mPosition==0?mActiveTextSize:mInactiveTextSize);
 
     }
-
-
     RectF rectF;
     Rect rect;
     boolean isRefresh;
@@ -694,6 +757,7 @@ public class BottomNavigationItem extends View {
             mPaint.setColor(color);
             return;
         }
+        //TODO FIX
 
         ColorFilter filter = new LightingColorFilter(color, 1);
         mPaint.setColorFilter(filter);
@@ -701,16 +765,16 @@ public class BottomNavigationItem extends View {
     }
 //    ColorFilter filter;
     private void changeUnSelectedIconColorFilter(@ColorInt int color){
-        ColorFilter filter = new LightingColorFilter(color, 1);
-        mUnSelectedIconPaint.setColorFilter(filter);
-//        mUnSelectedIconPaint.setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN));
+//        ColorFilter filter = new LightingColorFilter(color, 1);
+//        mUnSelectedIconPaint.setColorFilter(filter);
+        mUnSelectedIconPaint.setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN));
         mUnSelectedIconPaint.setColor(color);
     }
     private void changeSelectedIconColorFilter(int color){
 
-        ColorFilter filter = new LightingColorFilter(color, 1);
-        mSelectedIconPaint.setColorFilter(filter);
-//        mSelectedIconPaint.setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN));
+//        ColorFilter filter = new LightingColorFilter(color, 1);
+//        mSelectedIconPaint.setColorFilter(filter);
+        mSelectedIconPaint.setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN));
         mSelectedIconPaint.setColor(color);
     }
     public void translateAnim(){
@@ -721,7 +785,9 @@ public class BottomNavigationItem extends View {
         }
         else {
             //宽度没改变的不执行动画 TODO 10这个数值大小可能会有所变更
-            if(inActiveItemWidth==getWidth()||Math.abs(getWidth()-inActiveItemWidth)<=10)return;
+            if(inActiveItemWidth==getWidth()||Math.abs(getWidth()-inActiveItemWidth)<=10){
+                return;
+            }
             valueAnimator=ValueAnimator.ofFloat(getWidth(),inActiveItemWidth);
         }
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -769,4 +835,57 @@ public class BottomNavigationItem extends View {
         setLayoutParams(params);
         invalidate();
     }
+
+    private AppCompatActivity getActivity(){
+        return ((AppCompatActivity) getContext());
+    }
+
+    public Fragment getFragment(){
+        if(mFragment==null){
+            //TODO FIX IT
+
+            return null;
+        }
+
+        else return mFragment;
+    }
+
+    private String tag;
+
+    public void setFragment(String fragmentPackageName){
+        if(TextUtils.isEmpty(tag))tag=fragmentPackageName;
+        mFragment = getActivity().getSupportFragmentManager().findFragmentByTag(fragmentPackageName);
+        if(mFragment!=null){
+            getActivity().getSupportFragmentManager().beginTransaction().hide(mFragment).commitAllowingStateLoss();
+        }
+        else {
+            try {
+                Class<?> aClass = Class.forName(fragmentPackageName);
+                mFragment= (Fragment) aClass.newInstance();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+                throw new RuntimeException("you may provide a wrong packageName");
+            } catch (InstantiationException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private boolean isResume;
+    public void setIsViewPager(boolean isViewPager){
+        this.isViewPager=isViewPager;
+    }
+
+        @Override
+        protected void onVisibilityChanged(View changedView, int visibility) {
+            super.onVisibilityChanged(changedView, visibility);
+            if(visibility==VISIBLE&&config.isSlide){
+                correctItemData(isSelected);
+            }
+        }
+
+
+
 }

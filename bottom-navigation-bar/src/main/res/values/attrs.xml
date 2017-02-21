@@ -14,6 +14,8 @@
 
         <attr name="isSlide" format="boolean"></attr>
         <attr name="isShy" format="boolean"></attr>
+        <attr name="fragmentId" format="reference"></attr>
+        <attr name="viewpagerId" format="reference"></attr>
         <!--<attr name="itemIconTint" format="color"></attr>-->
         <!--<attr name="itemTextColor" format="color"></attr>-->
     </declare-styleable>

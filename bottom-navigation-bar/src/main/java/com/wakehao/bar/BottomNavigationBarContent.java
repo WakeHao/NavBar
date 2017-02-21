@@ -3,6 +3,9 @@ package com.wakehao.bar;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.os.Bundle;
+import android.os.Parcelable;
+import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -31,8 +34,8 @@ public class BottomNavigationBarContent extends LinearLayout {
     private OnClickListener mOnClickListener;
     private int[] widthSpec;
     private int mSwitchMode;
+    private int counts;
 
-    private int items;
 
     public BottomNavigationBarContent(Context context) {
         this(context,null);
@@ -42,7 +45,7 @@ public class BottomNavigationBarContent extends LinearLayout {
     private BottomNavigationBarContent(Context context, AttributeSet attrs) {
         this(context, attrs,0);
     }
-
+    private long LIMIT_OF_CLICK;
     private BottomNavigationBarContent(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         final Resources res=getResources();
@@ -66,12 +69,31 @@ public class BottomNavigationBarContent extends LinearLayout {
             public void onClick(View v) {
 //                BottomNavigationItem item = (BottomNavigationItem) ((BottomNavigationItemWithDot)v).getChildAt(0);
                 BottomNavigationItem item = (BottomNavigationItem) v;
-                //TODO :setFlag
                 if(mListener==null||(mListener!=null&&mListener.onNavigationItemSelected(item,item.getPosition()))){
-                    setItemSelected(item.getPosition());
+                    if(System.currentTimeMillis()-LIMIT_OF_CLICK>=150L) {
+                        //when is sliding,it can not been clicked
+                        if(viewPager==null){
+                            setItemSelected(item.getPosition(),true);
+                            LIMIT_OF_CLICK=System.currentTimeMillis();
+                        }
+                        else {
+                            if(((BottomNavigationBar) getParent()).getCanClick()){
+                                viewPager.setCurrentItem(item.getPosition(), false);
+                                setItemSelected(item.getPosition(),true);
+                                LIMIT_OF_CLICK=System.currentTimeMillis();
+                            }
+                        }
+//                        if(((BottomNavigationBar) getParent()).getCanClick()){
+//                            //recall onPageSelected()
+//                            if (viewPager != null) viewPager.setCurrentItem(item.getPosition(), false);
+//                            setItemSelected(item.getPosition(),true);
+//                            LIMIT_OF_CLICK=System.currentTimeMillis();
+//                        }
+                    }
                 }
             }
         };
+        setId(R.id.bar_content_private);
 
     }
 
@@ -80,8 +102,13 @@ public class BottomNavigationBarContent extends LinearLayout {
 //    }
 
 
-    public void setItemSelected(int position) {
-        if(mActivePosition==position)return;
+    public void setItemSelected(int position,boolean isAnim) {
+        if(mActivePosition==position)
+        {
+
+            //TODO add连续两次点击监听
+            return;
+        }
         int shiftedColor = ((BottomNavigationItem) ((BottomNavigationItemWithDot) getChildAt(position)).getChildAt(0)).getShiftedColor();
         if(shiftedColor!=0){
             ((BottomNavigationBar) getParent()).drawBackgroundCircle(shiftedColor,downX,downY);
@@ -90,7 +117,7 @@ public class BottomNavigationBarContent extends LinearLayout {
         for(int i=0;i<getChildCount();i++)
         {
             final BottomNavigationItem item = (BottomNavigationItem) ((BottomNavigationItemWithDot) getChildAt(i)).getChildAt(0);
-            item.setSelected(i==position?true:false);
+            item.setSelected(i==position,isAnim);
         }
     }
 
@@ -124,7 +151,7 @@ public class BottomNavigationBarContent extends LinearLayout {
     public void setItems(List<BottomNavigationItem> bottomNavigationItems){
         setOrientation(HORIZONTAL);
         setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,mBottomNavigationBarHeight));
-        int counts =bottomNavigationItems.size();
+        counts = bottomNavigationItems.size();
         widthSpec = new int[counts];
         int screenWidth=BarUtils.getDeviceWidth(getContext());
 //        int heightSpec=MeasureSpec.makeMeasureSpec(mBottomNavigationBarHeight,MeasureSpec.EXACTLY);
@@ -135,23 +162,23 @@ public class BottomNavigationBarContent extends LinearLayout {
         int remain;
         //shift mode
         if(mSwitchMode==1){
-             remain_activeMax=screenWidth-(counts-1)*mInactiveItemMinWidth;
+             remain_activeMax=screenWidth-(counts -1)*mInactiveItemMinWidth;
              activeItem=Math.min(mActiveItemMaxWidth,remain_activeMax);
 
             if(activeItem<mActiveItemMinWidth)activeItem=mActiveItemMinWidth;
             int remain_inActiveMax=(screenWidth - activeItem) / (counts - 1);
             inActiveItem=Math.min(mInactiveItemMaxWidth,remain_inActiveMax);
 
-            remain=screenWidth-activeItem-(counts-1)*inActiveItem;
+            remain=screenWidth-activeItem-(counts -1)*inActiveItem;
         }
         else {
-             remain_activeMax=screenWidth/counts;
+             remain_activeMax=screenWidth/ counts;
              activeItem=Math.min(mActiveItemMaxWidth,remain_activeMax);
              inActiveItem=activeItem;
-             remain=screenWidth-activeItem*counts;
+             remain=screenWidth-activeItem* counts;
         }
 
-        for (int i=0;i<counts;i++)
+        for (int i = 0; i< counts; i++)
         {
             widthSpec[i]=mActivePosition==i?activeItem:inActiveItem;
             if(remain>0){
@@ -171,13 +198,19 @@ public class BottomNavigationBarContent extends LinearLayout {
 //            if(i==mActivePosition)setItemSelected(mActivePosition);
         }
     }
+    private ViewPager viewPager;
+
+    public void setViewPager(ViewPager viewPager){
+        this.viewPager=viewPager;
+    }
     private BottomNavigationBar.OnNavigationItemSelectedListener mListener;
     public void injectListener(BottomNavigationBar.OnNavigationItemSelectedListener mListener) {
         this.mListener=mListener;
     }
 
-    public void finishInit(List<BottomNavigationItem> bottomNavigationItems) {
+    public void finishInit(List<BottomNavigationItem> bottomNavigationItems,boolean isViewpager) {
         for(BottomNavigationItem item: bottomNavigationItems){
+            item.setIsViewPager(isViewpager);
             item.finishInit();
         }
     }
@@ -188,15 +221,30 @@ public class BottomNavigationBarContent extends LinearLayout {
     }
 
     public void startAlphaAnim(int position, float positionOffset) {
-        //right 0-->1
-//        if(isRight){
-//            ((BottomNavigationItem) getChildAt(position)).alphaAnim(positionOffset);
-//            ((BottomNavigationItem) getChildAt(position+1)).alphaAnim(1-positionOffset);
-//        }else {//left 1-->0
-//            ((BottomNavigationItem) getChildAt(position+1)).alphaAnim(1-positionOffset);
-//            ((BottomNavigationItem) getChildAt(position)).alphaAnim(positionOffset);
-//        }
-        ((BottomNavigationItem) ((BottomNavigationItemWithDot) getChildAt(position)).getChildAt(0)).alphaAnim(positionOffset);
-        ((BottomNavigationItem) ((BottomNavigationItemWithDot) getChildAt(position+1)).getChildAt(0)).alphaAnim(1-positionOffset);
+        getBottomItem(position).alphaAnim(positionOffset);
+        getBottomItem(position+1).alphaAnim(1-positionOffset);
+    }
+
+    public BottomNavigationItem getBottomItem(int position){
+        return ((BottomNavigationItem) ((BottomNavigationItemWithDot) getChildAt(position)).getChildAt(0));
+    }
+
+    @Override
+    protected Parcelable onSaveInstanceState() {
+        Bundle bundle=new Bundle();
+        bundle.putInt("mActivePosition",mActivePosition);
+        bundle.putParcelable("superState",super.onSaveInstanceState());
+        return bundle;
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Parcelable state) {
+        if(state instanceof  Bundle){
+            Bundle bundle= (Bundle) state;
+            int mRestoreActivePosition = bundle.getInt("mActivePosition");
+            setItemSelected(mRestoreActivePosition,true);
+            state=bundle.getParcelable("superState");
+        }
+        super.onRestoreInstanceState(state);
     }
 }
