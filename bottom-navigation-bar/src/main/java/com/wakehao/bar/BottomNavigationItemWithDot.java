@@ -52,6 +52,16 @@ public class BottomNavigationItemWithDot extends FrameLayout {
         hasMesPoint = true;
         mDotView.showNum(num);
     }
+
+    /**
+     * 消费该位置的数字
+     */
+    public void disMissMes() {
+        hasMesPoint = false;
+        mDotView.disMisMes();
+    }
+
+
     /**
      * 改变DotView的位置
      *

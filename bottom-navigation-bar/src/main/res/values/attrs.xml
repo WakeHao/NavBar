@@ -12,7 +12,6 @@
         <attr name="selectedColor" format="color"></attr>
         <attr name="unSelectedColor" format="color"></attr>
 
-        <attr name="isSlide" format="boolean"></attr>
         <attr name="isShy" format="boolean"></attr>
         <attr name="fragmentId" format="reference"></attr>
         <attr name="viewpagerId" format="reference"></attr>

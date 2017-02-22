@@ -93,7 +93,6 @@ public class ItemParser {
                 case "fragment":
                     String attributeValue = parser.getAttributeValue(i);
                     item.setFragment(attributeValue);
-
                     break;
             }
         }

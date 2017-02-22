@@ -83,12 +83,6 @@ public class BottomNavigationBarContent extends LinearLayout {
                                 LIMIT_OF_CLICK=System.currentTimeMillis();
                             }
                         }
-//                        if(((BottomNavigationBar) getParent()).getCanClick()){
-//                            //recall onPageSelected()
-//                            if (viewPager != null) viewPager.setCurrentItem(item.getPosition(), false);
-//                            setItemSelected(item.getPosition(),true);
-//                            LIMIT_OF_CLICK=System.currentTimeMillis();
-//                        }
                     }
                 }
             }
@@ -105,8 +99,7 @@ public class BottomNavigationBarContent extends LinearLayout {
     public void setItemSelected(int position,boolean isAnim) {
         if(mActivePosition==position)
         {
-
-            //TODO add连续两次点击监听
+            if(mListener!=null)mListener.onNavigationItemSelectedAgain(getBottomItem(position),position);
             return;
         }
         int shiftedColor = ((BottomNavigationItem) ((BottomNavigationItemWithDot) getChildAt(position)).getChildAt(0)).getShiftedColor();
@@ -195,8 +188,11 @@ public class BottomNavigationBarContent extends LinearLayout {
                     widthSpec[i],mBottomNavigationBarHeight);
             item.setLayoutParams(layoutParams);
             addView(new BottomNavigationItemWithDot(getContext(),item));
-//            if(i==mActivePosition)setItemSelected(mActivePosition);
+//            if(i==mActivePosition)
+
+
         }
+//        setItemSelected(0,true);
     }
     private ViewPager viewPager;
 
@@ -220,9 +216,15 @@ public class BottomNavigationBarContent extends LinearLayout {
         return this;
     }
 
-    public void startAlphaAnim(int position, float positionOffset) {
-        getBottomItem(position).alphaAnim(positionOffset);
-        getBottomItem(position+1).alphaAnim(1-positionOffset);
+    public void startAlphaAnim(int position, float positionOffset, boolean isMoving) {
+       if(isMoving){
+           getBottomItem(position).setHasCorrect(false).alphaAnim(positionOffset);
+           getBottomItem(position+1).setHasCorrect(false).alphaAnim(1-positionOffset);
+       }
+        else{
+           getBottomItem(position).alphaAnim(positionOffset);
+           getBottomItem(position+1).alphaAnim(1-positionOffset);
+       }
     }
 
     public BottomNavigationItem getBottomItem(int position){

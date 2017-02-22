@@ -2,15 +2,27 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 <item    android:id="@+id/test_1"
     android:title="首页"
-    android:icon="@drawable/ic_home"></item>
+    android:icon="@drawable/ic_home"
+    shiftedColor="#258555"
+    fragment="com.wakehao.demo.fragment.WeChatHomeFragment"
+    ></item>
     <item    android:id="@+id/test_2"
         android:title="发现"
-        android:icon="@drawable/ic_t4"></item>
+        android:icon="@drawable/ic_t4"
+        shiftedColor="#851485"
+        fragment="com.wakehao.demo.fragment.WeChatContactFragment"
+        ></item>
     <item    android:id="@+id/test_3"
         android:title="社交"
-        android:icon="@drawable/ic_t5"></item>
+        android:icon="@drawable/ic_t5"
+        shiftedColor="#858433"
+        fragment="com.wakehao.demo.fragment.WeChatFindFragment"
+        ></item>
 
     <item    android:id="@+id/test_4"
         android:title="我的"
-        android:icon="@drawable/ic_t3"></item>
+        android:icon="@drawable/ic_t3"
+        shiftedColor="#985212"
+        fragment="com.wakehao.demo.fragment.WeChatMineFragment"
+        ></item>
 </menu>

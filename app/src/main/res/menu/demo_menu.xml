@@ -19,8 +19,12 @@
         android:title="发现"
         android:icon="@mipmap/service_normal"
         icon2="@mipmap/service_selected"
+
         fragment="com.wakehao.demo.fragment.WeChatFindFragment"
         ></item>
+
+
+
     <item
         android:id="@+id/test_4"
         android:title="我"

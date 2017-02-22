@@ -210,6 +210,7 @@ public class DragView extends FrameLayout {
 
             @Override
             public void onAnimationEnd(Animator animator) {
+                mAnim.removeListener(this);
                 isCanDraw=false;
                 isShowDragCircle=false;
                 isDisconnet=false;
