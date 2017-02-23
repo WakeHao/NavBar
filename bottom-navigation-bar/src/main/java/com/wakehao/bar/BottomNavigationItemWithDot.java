@@ -33,6 +33,7 @@ public class BottomNavigationItemWithDot extends FrameLayout {
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
+
         if (mBottomNavigationItem.getConfig().getSwitchMode()!=1) {
             dotTop=(int) mBottomNavigationItem.currentMarginTop;
         }
@@ -57,6 +58,7 @@ public class BottomNavigationItemWithDot extends FrameLayout {
      * 消费该位置的数字
      */
     public void disMissMes() {
+        if(!hasMesPoint)return;
         hasMesPoint = false;
         mDotView.disMisMes();
     }

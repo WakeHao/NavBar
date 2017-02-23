@@ -182,10 +182,8 @@ public class DotView extends View {
             padding = Utils.dip2px(mContext, 4);
             mDotPaint.setTextSize(Utils.sp2px(mContext, 9));
         } else if (num > 0 && num < 10) padding = Utils.dip2px(mContext, 4);
-        else if (num > 99) padding = 1f;
+        else if (num > 99) padding = 2f;
         else padding = Utils.dip2px(mContext, 3);
-        ;
-
     }
 
     private void refreshView() {

@@ -58,7 +58,7 @@ public class BottomNavigationBar extends FrameLayout{
     private int activeColor;
     private int inActiveColor;
     private boolean isSlide;
-    private boolean isShy;
+//    private boolean isShy;
     private @IdRes int containerId;
     private int itemCounts;
     private int viewpagerId;
@@ -104,8 +104,8 @@ public class BottomNavigationBar extends FrameLayout{
                     this,typedArray.getDimensionPixelSize(R.styleable.BottomNavigationBar_barElevation,0));
         }
 
-        if(typedArray.hasValue(R.styleable.BottomNavigationBar_fragmentId)){
-            containerId=typedArray.getResourceId(R.styleable.BottomNavigationBar_fragmentId,0);
+        if(typedArray.hasValue(R.styleable.BottomNavigationBar_fragmentContainerId)){
+            containerId=typedArray.getResourceId(R.styleable.BottomNavigationBar_fragmentContainerId,0);
         }
 
         if(typedArray.hasValue(R.styleable.BottomNavigationBar_viewpagerId)){
@@ -118,7 +118,7 @@ public class BottomNavigationBar extends FrameLayout{
         activeColor = typedArray.getColor(R.styleable.BottomNavigationBar_selectedColor, BarUtils.getAppColorPrimary(context));
         inActiveColor = typedArray.getColor(R.styleable.BottomNavigationBar_unSelectedColor, Color.GRAY);
 //        isSlide=typedArray.getBoolean(R.styleable.BottomNavigationBar_isSlide,false);
-        isShy=typedArray.getBoolean(R.styleable.BottomNavigationBar_isShy,false);
+//        isShy=typedArray.getBoolean(R.styleable.BottomNavigationBar_isShy,false);
 
         if(typedArray.hasValue(R.styleable.BottomNavigationBar_menu)){
             ItemParser parser=new ItemParser(context,getDefaultConfig());
@@ -141,10 +141,10 @@ public class BottomNavigationBar extends FrameLayout{
     protected boolean isMoving;
     protected boolean isBackMoving;
 
-    public boolean getCanClick(){
+     boolean getCanClick(){
         return !isMoving&&!isBackMoving;
     }
-    public void initViewPager(@IdRes int viewpagerId) {
+    private void initViewPager(@IdRes int viewpagerId) {
         viewpager = (ViewPager) ((Activity) getContext()).findViewById(viewpagerId);
         viewpager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener(){
             @Override
@@ -196,7 +196,7 @@ public class BottomNavigationBar extends FrameLayout{
         viewpager.setAdapter(pagerAdapter);
     }
 
-    public void setFirstItemBackgroundColor(int shiftedColor){
+     void setFirstItemBackgroundColor(int shiftedColor){
         setBackgroundColor(shiftedColor);
     }
     private BottomNavigationItem.Config getDefaultConfig() {
@@ -216,7 +216,7 @@ public class BottomNavigationBar extends FrameLayout{
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
-    public void drawBackgroundCircle(int shiftedColor,float x,float y) {
+     void drawBackgroundCircle(int shiftedColor,float x,float y) {
         if(mSwitchMode!=1)return;
         if(currentRadius==0f)currentRadius=BarUtils.dip2px(getContext(),10);
         if(maxRadius==0f)maxRadius = (float) Math.sqrt(getMeasuredHeight()*getMeasuredHeight()+getMeasuredWidth()*getMeasuredWidth());
@@ -343,7 +343,7 @@ public class BottomNavigationBar extends FrameLayout{
         }
     }
 
-    public void startAlphaAnim(int position, float positionOffset, boolean isMoving) {
+    private void startAlphaAnim(int position, float positionOffset, boolean isMoving) {
         ((BottomNavigationBarContent) getChildAt(1)).startAlphaAnim(position,positionOffset,isMoving);
     }
 
@@ -433,7 +433,7 @@ public class BottomNavigationBar extends FrameLayout{
         ((BottomNavigationItemWithDot) ((BottomNavigationBarContent) getChildAt(1)).getChildAt(position)).showNum(num);
     }
 
-    public @IdRes int getContainerId(){
+      @IdRes int getContainerId(){
         return containerId;
     }
 

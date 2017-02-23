@@ -9,6 +9,8 @@
         android:gravity="center"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:textSize="22sp"
+        android:textColor="#985212"
         android:text="我" />
 
 </FrameLayout>

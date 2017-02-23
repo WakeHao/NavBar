@@ -12,8 +12,8 @@
         <attr name="selectedColor" format="color"></attr>
         <attr name="unSelectedColor" format="color"></attr>
 
-        <attr name="isShy" format="boolean"></attr>
-        <attr name="fragmentId" format="reference"></attr>
+        <!--<attr name="isShy" format="boolean"></attr>-->
+        <attr name="fragmentContainerId" format="reference"></attr>
         <attr name="viewpagerId" format="reference"></attr>
         <!--<attr name="itemIconTint" format="color"></attr>-->
         <!--<attr name="itemTextColor" format="color"></attr>-->

@@ -9,6 +9,8 @@
         android:gravity="center"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="通信录" />
+        android:textColor="#851485"
+        android:textSize="22sp"
+        android:text="通讯录" />
 
 </FrameLayout>

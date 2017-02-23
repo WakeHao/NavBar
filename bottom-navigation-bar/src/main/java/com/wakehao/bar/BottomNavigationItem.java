@@ -67,7 +67,7 @@ public class BottomNavigationItem extends View {
     private int activeItemWidth;
     private int inActiveItemWidth;
 
-    public float currentMarginTop;
+     float currentMarginTop;
 
     private boolean isViewPager;
     public BottomNavigationItem(Context context) {
@@ -118,7 +118,10 @@ public class BottomNavigationItem extends View {
         if(config.isSlide&&iconRes2_selected==0){
             throw new RuntimeException("you need provide 2 pictures in Slide mode at least");
         }
-
+        if(config.switchMode==0){
+            currentMarginTop=isSelected?mActiveMarginTop:mScaleInactiveMarginTop;
+        }
+        if(config.switchMode==2)currentMarginTop=mActiveMarginTop;
         if (mPosition==0){
             setSelected(true,false);
         }
@@ -643,7 +646,7 @@ public class BottomNavigationItem extends View {
 //                mPaint.setTextSize(mActiveTextSize * animatedFraction);
                 updateTextPaint(mActiveTextSize * animatedFraction);
             } else {
-                // TODO FIXERROR
+                //
 //                mPaint.setTextSize(mActiveTextSize - mActiveTextSize * animatedFraction);
                 updateTextPaint(mActiveTextSize - mActiveTextSize * animatedFraction);
             }
@@ -774,7 +777,7 @@ public class BottomNavigationItem extends View {
             @Override
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
-                //TODO 点击可能也会在某些性能低的机器上产生动画执行一半终止的情况，如果发生可以手动校正
+                //点击可能也会在某些性能低的机器上产生动画执行一半终止的情况，如果发生可以手动校正
                 valueAnimator.removeListener(this);
 //                if(!hasCorrect){
                     correctItemData(isSelected,true);

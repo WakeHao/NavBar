@@ -9,6 +9,8 @@
         android:gravity="center"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:textColor="#258555"
+        android:textSize="22sp"
         android:text="@string/home" />
 
 </FrameLayout>

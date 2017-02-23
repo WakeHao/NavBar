@@ -1,5 +1,6 @@
 package com.wakehao.demo;
 
+import android.annotation.TargetApi;
 import android.content.Intent;
 import android.os.Build;
 import android.support.annotation.ColorInt;
@@ -11,6 +12,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.widget.Toast;
 
 import com.wakehao.bar.BottomNavigationBar;
 import com.wakehao.bar.BottomNavigationItem;
@@ -32,38 +34,10 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         bar = (BottomNavigationBar) findViewById(R.id.bar);
 
-        bar.setOnNavigationItemSelectedListener(new BottomNavigationBar.OnNavigationItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull BottomNavigationItem item, int selectedPosition) {
-                if(selectedPosition==2){
-//                    bar.setItemSelected(2);
-//                    startActivityForResult(new Intent(MainActivity.this, LoginActivity.class),1);
-//                    bar.setItemSelected(2);
-                    return true;
-                }
-                return true;
-            }
-
-            @Override
-            public void onNavigationItemSelectedAgain(@NonNull BottomNavigationItem item, int reSelectedPosition) {
-
-            }
-        });
-
-        bar.showNum(1,80);
-        bar.showNum(0,7);
-        bar.disMissNum(1);
-//        bar.setItemSelected(2);
-//        bar.setItemSelected(3);
-
-//
+        bar.showNum(0,80);
+        bar.showNum(1,100);
+        bar.showNum(2,-2);
+        bar.disMissNum(3);
     }
 
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if(resultCode!=RESULT_OK)return;
-        bar.setItemSelected(2);
-    }
 }

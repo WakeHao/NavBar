@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:title="首页"
+        android:icon="@drawable/ic_home"
+        fragment="com.wakehao.demo.fragment.WeChatHomeFragment"
+        ></item>
+    <item
+        android:title="发现"
+        fragment="com.wakehao.demo.fragment.WeChatContactFragment"
+        android:icon="@drawable/ic_t4"
+        ></item>
+    <item
+        android:title="社交"
+        fragment="com.wakehao.demo.fragment.WeChatMineFragment"
+        android:icon="@drawable/ic_t5"
+        ></item>
+</menu>
