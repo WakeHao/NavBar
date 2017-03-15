@@ -1,18 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:title="首页"
-        android:icon="@drawable/ic_home"
+        android:title="time"
+        android:icon="@drawable/ic_timeline_black_24dp"
         fragment="com.wakehao.demo.fragment.WeChatHomeFragment"
         ></item>
     <item
-        android:title="发现"
+        android:title="unread"
         fragment="com.wakehao.demo.fragment.WeChatContactFragment"
-        android:icon="@drawable/ic_t4"
+        android:icon="@drawable/ic_markunread_black_24dp"
         ></item>
     <item
-        android:title="社交"
+        android:title="smile"
+        fragment="com.wakehao.demo.fragment.WeChatFindFragment"
+        android:icon="@drawable/ic_mood_black_24dp"
+        ></item>
+
+    <item
+        android:title="person"
         fragment="com.wakehao.demo.fragment.WeChatMineFragment"
-        android:icon="@drawable/ic_t5"
+        android:icon="@drawable/ic_person_black_24dp"
         ></item>
 </menu>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_icon"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.wakehao.demo.IconActivity">
+    <ImageView
+        android:id="@+id/image_unSelected"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:src="@mipmap/service_normal"
+        />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <ImageView
+        android:layout_alignParentRight="true"
+
+        android:id="@+id/image_selected"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:src="@mipmap/service_selected"
+        />
+<SeekBar
+
+    android:layout_marginBottom="250dp"
+    android:layout_alignParentBottom="true"
+    android:id="@+id/seek"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" />
+</RelativeLayout>

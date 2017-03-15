@@ -1,4 +1,5 @@
 apply plugin: 'com.android.library'
+//apply plugin: 'com.novoda.bintray-release'//添加
 
 android {
     compileSdkVersion 25
@@ -19,6 +20,9 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    lintOptions {
+        abortOnError false
+    }
 }
 
 dependencies {
@@ -29,4 +33,109 @@ dependencies {
     compile 'com.android.support:appcompat-v7:25.1.0'
     testCompile 'junit:junit:4.12'
     compile 'org.jetbrains:annotations-java5:15.0'
+    compile "com.andkulikov:transitionseverywhere:1.7.0"
 }
+//添加插件
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
+
+//定义版本
+version = "0.0.2"
+
+//定义相当网站
+def siteUrl = 'https://github.com/WakeHao/BottomNavigationBar'    // project homepage
+def gitUrl = 'https://github.com/WakeHao/BottomNavigationBar.git' // project git
+
+//定义GROUP
+group = "com.chen.wakehao.library"
+
+//定义pom并打包aar
+install {
+    repositories.mavenInstaller {
+        // This generates POM.xml with proper parameters
+        pom {
+            project {
+                packaging 'aar'
+                name 'a component of android bottom tab'//一些描述
+                url siteUrl
+                licenses {
+                    license {
+                        name 'The Apache software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {//开发者信息
+                        id 'wakehaoss'
+                        name 'Chen Weihao'
+                        email 'jayhoww@sina.com'
+                    }
+                }
+                scm {
+                    connection gitUrl
+                    developerConnection gitUrl
+                    url siteUrl
+                }
+            }
+        }
+    }
+}
+
+//打包javadocjar和sourcejar
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+
+task javadoc(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+javadoc {
+    options{
+        encoding 'UTF-8'
+        charSet 'UTF-8'
+        author true
+    }
+}
+
+artifacts {
+    archives javadocJar
+    archives sourcesJar
+}
+
+//上传到maven仓库,从local.properties读取user和apikey
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+bintray {
+    user = properties.getProperty("bintray.user")
+    key = properties.getProperty("bintray.apikey")
+    configurations = ['archives']
+    pkg {
+        repo = "maven"  //在网站上创建的仓库名，在https://bintray.com/上注册完帐号时，已经有了一个组织（organization），但是没有仓库（Repositories），需要自己先创建一个仓库
+        name = "bottom-navigation-bar"                // project name in maven
+        websiteUrl = siteUrl
+        vcsUrl = gitUrl
+        licenses = ["Apache-2.0"]
+        publish = true
+    }
+}
+
+
+
+////添加
+//publish {
+//    userOrg = 'wakehaoss'//bintray.com用户名
+//    groupId = 'com.wakehao'//jcenter上的路径
+//    artifactId = 'bottom-navigation-bar'//项目名称
+//    publishVersion = '0.0.1'//版本号
+//    desc = 'a component of android bottom tab'//描述，不重要
+//    website = 'https://github.com/WakeHao/BottomNavigationBar'//网站，最好有，不重要
+//
+//}

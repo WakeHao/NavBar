@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:textSize="22sp"
-        android:textColor="#858433"
-        android:text="发现" />
+        android:textColor="@color/green"
+        android:text="Fragment_3" />
 
 </FrameLayout>

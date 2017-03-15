@@ -18,13 +18,13 @@ import java.util.List;
  * Created by WakeHao on 2017/1/5.
  */
 
-public class ItemParser {
+class ItemParser {
     private Context context;
-    private List<BottomNavigationItem> items=new ArrayList<>();
-    private BottomNavigationItem item;
-    private BottomNavigationItem.Config config;
+    private List<BottomNavigationItemWithDot> items=new ArrayList<>();
+    private BottomNavigationItemWithDot item;
+    private BottomNavigationItemWithDot.Config config;
 
-    public ItemParser(Context context,BottomNavigationItem.Config config) {
+    public ItemParser(Context context,BottomNavigationItemWithDot.Config config) {
         this.context = context;
         this.config=config;
     }
@@ -84,11 +84,11 @@ public class ItemParser {
                     break;
                 case "shiftedColor":
                     //shift mode
-                    if(config.getSwitchMode()==1)
-                    {
+//                    if(config.getSwitchMode()==1)
+//                    {
                         Integer shiftedColor=getColor(i,parser);
                         if(shiftedColor!=null)item.setShiftedColor(shiftedColor);
-                    }
+//                    }
                     break;
                 case "fragment":
                     String attributeValue = parser.getAttributeValue(i);
@@ -102,8 +102,8 @@ public class ItemParser {
 
 
 
-    private BottomNavigationItem getDefaultItem() {
-        BottomNavigationItem bar=new BottomNavigationItem(context);
+    private BottomNavigationItemWithDot getDefaultItem() {
+        BottomNavigationItemWithDot bar=new BottomNavigationItemWithDot(context);
         bar.setConfig(config);
         return bar;
     }
@@ -130,7 +130,7 @@ public class ItemParser {
         }
     }
 
-    public List<BottomNavigationItem> getBottomNavigationItems(){
+    public List<BottomNavigationItemWithDot> getBottomNavigationItems(){
         return items;
     }
 

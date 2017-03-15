@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+    <ImageView
+        android:id="@+id/bar_image"
+        android:layout_width="@dimen/item_icon_size"
+        android:layout_height="@dimen/item_icon_size"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="@dimen/item_shiftInactive_marginTop"
+        />
+    <ImageView
+        android:id="@+id/bar_image_selected"
+
+        android:layout_width="@dimen/item_icon_size"
+        android:layout_height="@dimen/item_icon_size"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="@dimen/item_shiftInactive_marginTop"
+        />
+
+
+    <TextView
+        android:id="@+id/bar_title"
+        android:layout_gravity="center_horizontal|bottom"
+        android:maxLines="1"
+        android:scaleX="0"
+        android:scaleY="0"
+        android:layout_marginBottom="@dimen/item_active_marginBottom"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+</merge>

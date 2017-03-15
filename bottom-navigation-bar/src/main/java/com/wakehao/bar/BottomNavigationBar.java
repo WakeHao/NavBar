@@ -22,6 +22,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPager;
+import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v7.app.AppCompatActivity;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -36,7 +37,10 @@ import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
-import com.wakehao.bar.dot.DotView;
+import com.transitionseverywhere.Fade;
+import com.transitionseverywhere.Slide;
+import com.transitionseverywhere.TransitionManager;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -117,7 +121,7 @@ public class BottomNavigationBar extends FrameLayout{
         itemBackGroundRes = typedArray.getResourceId(R.styleable.BottomNavigationBar_itemBackground, 0);
         activeColor = typedArray.getColor(R.styleable.BottomNavigationBar_selectedColor, BarUtils.getAppColorPrimary(context));
         inActiveColor = typedArray.getColor(R.styleable.BottomNavigationBar_unSelectedColor, Color.GRAY);
-//        isSlide=typedArray.getBoolean(R.styleable.BottomNavigationBar_isSlide,false);
+        isSlide=typedArray.getBoolean(R.styleable.BottomNavigationBar_isSlide,false);
 //        isShy=typedArray.getBoolean(R.styleable.BottomNavigationBar_isShy,false);
 
         if(typedArray.hasValue(R.styleable.BottomNavigationBar_menu)){
@@ -128,40 +132,65 @@ public class BottomNavigationBar extends FrameLayout{
             mBottomNavigationBarContent.setSwitchMode(mSwitchMode).setItems(parser.getBottomNavigationItems());
             FrameLayout.LayoutParams layoutParams=new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER);
             addView(mBottomNavigationBarContent,layoutParams);
-            mBottomNavigationBarContent.finishInit(parser.getBottomNavigationItems(),viewpagerId!=0);
+
+            for(int i=0;i<itemCounts;i++){
+                canChangeBackColor=canChangeBackColor&&(getBottomItem(i).getShiftedColor()!=0);
+            }
+            mBottomNavigationBarContent.setCanChangeBackColor(canChangeBackColor);
+            mBottomNavigationBarContent.finishInit(parser.getBottomNavigationItems(),viewpagerId!=0,isSlide,canChangeBackColor);
         }
         else {
 
         }
         typedArray.recycle();
-
-
     }
+    private boolean canChangeBackColor=true;
+
+    boolean isCanChangeBackColor(){
+        return canChangeBackColor;
+    }
+
 
     protected boolean isMoving;
     protected boolean isBackMoving;
+    protected float offset;
 
      boolean getCanClick(){
-        return !isMoving&&!isBackMoving;
+        return !isMoving&&!isBackMoving&offset==0;
     }
     private void initViewPager(@IdRes int viewpagerId) {
         viewpager = (ViewPager) ((Activity) getContext()).findViewById(viewpagerId);
+        viewpager.setEnabled(false);
         viewpager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener(){
+
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
                 super.onPageScrolled(position, positionOffset, positionOffsetPixels);
+                offset=positionOffset;
                 if(positionOffset==0f){
-                    //在某些性能低的机器上 可能positionOffset会从0.4->0调到0，导致界面错位。
-                    if(!getBottomItem(position).isHasCorrect()){
+//                    if(from==-1)return;
+//                    //滑向右侧
+//                    if(from<position){
+//                        if(!getBottomItem(position).isHasCorrect())getBottomItem(position).correctItem(true);
+//                        if(!getBottomItem(position-1).isHasCorrect())getBottomItem(position-1).correctItem(false);
+//                    }
+//                    else{
+//                        if(!getBottomItem(position).isHasCorrect())getBottomItem(position).correctItem(true);
+//                        if(!getBottomItem(position+1).isHasCorrect())getBottomItem(position+1).correctItem(false);
+//                    }
+                    //item 3->1 快速滑动可能会导致3不检索 所以每个item都需要校正一次
+                    if(isSlide){
                         for(int i=0;i<itemCounts;i++){
-                            getBottomItem(i).correctItemData(i==position,true);
+                            if(!getBottomItem(i).isHasCorrect())getBottomItem(i).correctItem(i==position);
                         }
                     }
                 }
                 if(positionOffset>0){
-//                    if(isMoving){
+
+                    if(isSlide){
                         startAlphaAnim(position,positionOffset,isMoving);
-//                    }
+                        if(canChangeBackColor)setBackgroundColor(BarUtils.getOffsetColor(positionOffset,getBottomItem(position).getShiftedColor(),getBottomItem(position+1).getShiftedColor(),10));
+                    }
                 }
             }
             @Override
@@ -186,7 +215,14 @@ public class BottomNavigationBar extends FrameLayout{
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
                 if(isBackMoving){
-                    setItemSelected(position,false);
+//                    setItemSelected(position,false);
+                    //不在此选中item，只是更新activePosition
+                    if(isSlide)getChildView().updatePosition(position);
+                    else {
+                        //非slide模式 表示滑动切换到item时才执行动画 这里不执行背景水滴效果
+                        setItemSelected(position,true,false);
+                        correctBackColor(position);
+                    }
                 }
             }
         });
@@ -199,8 +235,8 @@ public class BottomNavigationBar extends FrameLayout{
      void setFirstItemBackgroundColor(int shiftedColor){
         setBackgroundColor(shiftedColor);
     }
-    private BottomNavigationItem.Config getDefaultConfig() {
-        return new BottomNavigationItem.Config.Build()
+    private BottomNavigationItemWithDot.Config getDefaultConfig() {
+        return new BottomNavigationItemWithDot.Config.Build()
                 .setItemBackGroundRes(itemBackGroundRes)
                 .setSwitchMode(mSwitchMode)
                 .setActiveColor(activeColor)
@@ -217,7 +253,7 @@ public class BottomNavigationBar extends FrameLayout{
     }
 
      void drawBackgroundCircle(int shiftedColor,float x,float y) {
-        if(mSwitchMode!=1)return;
+//        if(mSwitchMode!=1)return;
         if(currentRadius==0f)currentRadius=BarUtils.dip2px(getContext(),10);
         if(maxRadius==0f)maxRadius = (float) Math.sqrt(getMeasuredHeight()*getMeasuredHeight()+getMeasuredWidth()*getMeasuredWidth());
         if(Build.VERSION.SDK_INT<21){
@@ -378,30 +414,51 @@ public class BottomNavigationBar extends FrameLayout{
     }
 
 
+    /**
+     * 滑动渐变结束校正
+     */
+    public void correctBackColor() {
+
+        setBackgroundColor(getBottomItem(getChildView().getActivePosition()).getShiftedColor());
+    }
+
+
+    /**
+     * 设置背景色为item position的color
+     * @param position
+     */
+    public void correctBackColor(int position) {
+
+        if(canChangeBackColor)setBackgroundColor(getBottomItem(position).getShiftedColor());
+    }
     public interface OnNavigationItemSelectedListener {
 
-        boolean onNavigationItemSelected(@NonNull BottomNavigationItem item,int selectedPosition);
+        boolean onNavigationItemSelected(@NonNull BottomNavigationItemWithDot item,int selectedPosition);
 
-        void onNavigationItemSelectedAgain(@NonNull BottomNavigationItem item,int reSelectedPosition);
+        void onNavigationItemSelectedAgain(@NonNull BottomNavigationItemWithDot item,int reSelectedPosition);
     }
 
     public void setOnNavigationItemSelectedListener(
             @Nullable OnNavigationItemSelectedListener listener) {
 
+
         mBottomNavigationBarContent.injectListener(listener);
     }
+
+
 
 
     /**
      * set buy user
      * @param position
      */
-    public void setItemSelected(final int position){
+    public void setItemSelected(final int position, final boolean isAnim){
         if(position<0||position>itemCounts-1){
             throw new RuntimeException("the range of position is 0-"+(itemCounts-1));
         }
         if(isInflated){
-            setItemSelected(position,true);
+            setItemSelected(position,isAnim,false);
+            correctBackColor(position);
             if(viewpager!=null){
                 viewpager.setCurrentItem(position,false);
             }
@@ -413,7 +470,8 @@ public class BottomNavigationBar extends FrameLayout{
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                         getViewTreeObserver().removeOnGlobalLayoutListener(this);
                     }
-                    setItemSelected(position,true);
+                    setItemSelected(position,isAnim,false);
+                    correctBackColor(position);
                     if(viewpager!=null){
                         viewpager.setCurrentItem(position,false);
                     }
@@ -424,8 +482,29 @@ public class BottomNavigationBar extends FrameLayout{
     }
 
 
-    private void setItemSelected(int position,boolean isAnim){
-        ((BottomNavigationBarContent) getChildAt(1)).setItemSelected(position,isAnim);
+    private void setItemSelected(int position,boolean isAnim,boolean isCanBackWave){
+        getChildView().setItemSelected(position,isAnim,isCanBackWave);
+    }
+    public void hideBar(){
+        if(getVisibility()==INVISIBLE)return;
+        TransitionManager.beginDelayedTransition(this,new Slide());
+        setVisibility(INVISIBLE);
+    }
+    public void hideBar(int mode){
+        if(getVisibility()==INVISIBLE)return;
+        TransitionManager.beginDelayedTransition(this,new Fade().setDuration(700));
+        setVisibility(INVISIBLE);
+    }
+    public void showBar(){
+        if(getVisibility()==VISIBLE)return;
+        TransitionManager.beginDelayedTransition(this,new Slide());
+        setVisibility(VISIBLE);
+    }
+
+    public void showBar(int mode){
+        if(getVisibility()==VISIBLE)return;
+        TransitionManager.beginDelayedTransition(this,new Fade().setDuration(700));
+        setVisibility(VISIBLE);
     }
 
     public void showNum(int position,int num) {
@@ -455,9 +534,13 @@ public class BottomNavigationBar extends FrameLayout{
 
     }
 
-    private BottomNavigationItem getBottomItem(int position){
+    private BottomNavigationItemWithDot getBottomItem(int position){
 
-        return ((BottomNavigationItem) ((BottomNavigationItemWithDot) ((BottomNavigationBarContent) getChildAt(1)).getChildAt(position)).getChildAt(0));
+        return  ((BottomNavigationItemWithDot) ((BottomNavigationBarContent) getChildAt(1)).getChildAt(position));
+    }
+
+    private BottomNavigationBarContent getChildView(){
+        return ((BottomNavigationBarContent) getChildAt(1));
     }
 
     public Fragment getFragment(int position){
@@ -469,5 +552,28 @@ public class BottomNavigationBar extends FrameLayout{
             return viewpager;
         }
         else return null;
+    }
+
+    /**
+     *  改变position位置的item标题
+     * @param position
+     * @param title
+     */
+    public void setTitle(final int position, final String title){
+
+        if(isInflated){
+            getBottomItem(position).changeTitle(title);
+        }
+        else {
+            getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                        getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    }
+                    getBottomItem(position).changeTitle(title);
+                }
+            });
+        }
     }
 }

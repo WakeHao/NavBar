@@ -19,7 +19,7 @@ import java.util.List;
  * Created by WakeHao on 2017/1/10.
  */
 
-public class BottomNavigationBarContent extends LinearLayout {
+ class BottomNavigationBarContent extends LinearLayout {
 
     private final int mBottomNavigationBarHeight;
 
@@ -37,7 +37,7 @@ public class BottomNavigationBarContent extends LinearLayout {
     private int counts;
 
 
-    public BottomNavigationBarContent(Context context) {
+     BottomNavigationBarContent(Context context) {
         this(context,null);
     }
 
@@ -46,7 +46,7 @@ public class BottomNavigationBarContent extends LinearLayout {
         this(context, attrs,0);
     }
     private long LIMIT_OF_CLICK;
-    private BottomNavigationBarContent(Context context, AttributeSet attrs, int defStyleAttr) {
+    private BottomNavigationBarContent(Context context, AttributeSet attrs, final int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         final Resources res=getResources();
 
@@ -67,21 +67,20 @@ public class BottomNavigationBarContent extends LinearLayout {
         mOnClickListener = new OnClickListener() {
             @Override
             public void onClick(View v) {
-//                BottomNavigationItem item = (BottomNavigationItem) ((BottomNavigationItemWithDot)v).getChildAt(0);
-                BottomNavigationItem item = (BottomNavigationItem) v;
-                if(mListener==null||(mListener!=null&&mListener.onNavigationItemSelected(item,item.getPosition()))){
+//                boolean flag=true;
+                BottomNavigationItemWithDot item = (BottomNavigationItemWithDot) v;
+                if(mListener==null|| (mListener!=null&&mListener.onNavigationItemSelected(item,item.getPosition()))){
                     if(System.currentTimeMillis()-LIMIT_OF_CLICK>=150L) {
                         //when is sliding,it can not been clicked
                         if(viewPager==null){
-                            setItemSelected(item.getPosition(),true);
-                            LIMIT_OF_CLICK=System.currentTimeMillis();
+                            setItemSelected(item.getPosition(),true,true);
                         }
                         else {
                             if(((BottomNavigationBar) getParent()).getCanClick()){
                                 viewPager.setCurrentItem(item.getPosition(), false);
-                                setItemSelected(item.getPosition(),true);
-                                LIMIT_OF_CLICK=System.currentTimeMillis();
+                                setItemSelected(item.getPosition(),true,true);
                             }
+                            LIMIT_OF_CLICK=System.currentTimeMillis();
                         }
                     }
                 }
@@ -91,31 +90,70 @@ public class BottomNavigationBarContent extends LinearLayout {
 
     }
 
-//    private BottomNavigationItem getBottomNavigationItem(){
-//        return
-//    }
 
 
-    public void setItemSelected(int position,boolean isAnim) {
+    private boolean canChangeBackColor;
+
+     boolean isCanChangeBackColor() {
+        return canChangeBackColor;
+    }
+
+     void setCanChangeBackColor(boolean canChangeBackColor) {
+        this.canChangeBackColor = canChangeBackColor;
+    }
+
+    /**
+     * 选择item
+     * @param position 选择的位置
+     * @param isAnim 是否开启动画
+     * @param isCanBackWave 是否容许开启点击水纹效果，在非slide且滑动结束后调用时才为false，其余为true
+     */
+
+     void setItemSelected(int position, boolean isAnim,boolean isCanBackWave) {
+
         if(mActivePosition==position)
         {
             if(mListener!=null)mListener.onNavigationItemSelectedAgain(getBottomItem(position),position);
             return;
         }
-        int shiftedColor = ((BottomNavigationItem) ((BottomNavigationItemWithDot) getChildAt(position)).getChildAt(0)).getShiftedColor();
-        if(shiftedColor!=0){
-            ((BottomNavigationBar) getParent()).drawBackgroundCircle(shiftedColor,downX,downY);
-        }
-        mActivePosition=position;
-        for(int i=0;i<getChildCount();i++)
-        {
-            final BottomNavigationItem item = (BottomNavigationItem) ((BottomNavigationItemWithDot) getChildAt(i)).getChildAt(0);
-            item.setSelected(i==position,isAnim);
-        }
+
+        int shiftedColor = ( ((BottomNavigationItemWithDot) getChildAt(position))).getShiftedColor();
+         //只有每个item都设置了shfitColor才会由背景点击切换
+         if(canChangeBackColor&&isCanBackWave){
+
+             ((BottomNavigationBar) getParent()).drawBackgroundCircle(shiftedColor,downX,downY);
+
+         }
+
+         if(!isAnim){
+             getBottomItem(position).correctItem(true);
+             getBottomItem(mActivePosition).correctItem(false);
+             mActivePosition=position;
+             return;
+         }
+
+
+            getBottomItem(position).setSelected(true,isAnim);
+            getBottomItem(mActivePosition).setSelected(false,isAnim);
+            mActivePosition=position;
+            return;
+
+
+
+//        mActivePosition=position;
+//        for(int i=0;i<getChildCount();i++)
+//        {
+//            final BottomNavigationItemWithDot item = ((BottomNavigationItemWithDot) getChildAt(i));
+//            item.setSelected(i==position,isAnim);
+//        }
     }
 
     void updatePosition(int mActivePosition){
+
         this.mActivePosition=mActivePosition;
+    }
+    int getActivePosition(){
+        return mActivePosition;
     }
 
     @Override
@@ -141,7 +179,7 @@ public class BottomNavigationBarContent extends LinearLayout {
 //    }
 
 
-    public void setItems(List<BottomNavigationItem> bottomNavigationItems){
+     void setItems(List<BottomNavigationItemWithDot> bottomNavigationItems){
         setOrientation(HORIZONTAL);
         setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,mBottomNavigationBarHeight));
         counts = bottomNavigationItems.size();
@@ -178,7 +216,7 @@ public class BottomNavigationBarContent extends LinearLayout {
                 widthSpec[i]++;
                 remain--;
             }
-            final BottomNavigationItem item = bottomNavigationItems.get(i);
+            final BottomNavigationItemWithDot item = bottomNavigationItems.get(i);
             item.setClickable(true);
             item.setPosition(i);
             item.setOnClickListener(mOnClickListener);
@@ -187,7 +225,7 @@ public class BottomNavigationBarContent extends LinearLayout {
             LinearLayout.LayoutParams layoutParams=new LinearLayout.LayoutParams(
                     widthSpec[i],mBottomNavigationBarHeight);
             item.setLayoutParams(layoutParams);
-            addView(new BottomNavigationItemWithDot(getContext(),item));
+            addView(item);
 //            if(i==mActivePosition)
 
 
@@ -196,27 +234,29 @@ public class BottomNavigationBarContent extends LinearLayout {
     }
     private ViewPager viewPager;
 
-    public void setViewPager(ViewPager viewPager){
+     void setViewPager(ViewPager viewPager){
         this.viewPager=viewPager;
     }
     private BottomNavigationBar.OnNavigationItemSelectedListener mListener;
-    public void injectListener(BottomNavigationBar.OnNavigationItemSelectedListener mListener) {
+     void injectListener(BottomNavigationBar.OnNavigationItemSelectedListener mListener) {
         this.mListener=mListener;
     }
 
-    public void finishInit(List<BottomNavigationItem> bottomNavigationItems,boolean isViewpager) {
-        for(BottomNavigationItem item: bottomNavigationItems){
+     void finishInit(List<BottomNavigationItemWithDot> bottomNavigationItems, boolean isViewpager, boolean isSlide, boolean canChangeBackColor) {
+        for(BottomNavigationItemWithDot item: bottomNavigationItems){
+            item.setSlide(isSlide);
             item.setIsViewPager(isViewpager);
+            item.setCanChangeBackColor(canChangeBackColor);
             item.finishInit();
         }
     }
 
-    public BottomNavigationBarContent setSwitchMode(int mSwitchMode) {
+     BottomNavigationBarContent setSwitchMode(int mSwitchMode) {
         this.mSwitchMode = mSwitchMode;
         return this;
     }
 
-    public void startAlphaAnim(int position, float positionOffset, boolean isMoving) {
+     void startAlphaAnim(int position, float positionOffset, boolean isMoving) {
        if(isMoving){
            getBottomItem(position).setHasCorrect(false).alphaAnim(positionOffset);
            getBottomItem(position+1).setHasCorrect(false).alphaAnim(1-positionOffset);
@@ -227,8 +267,8 @@ public class BottomNavigationBarContent extends LinearLayout {
        }
     }
 
-    public BottomNavigationItem getBottomItem(int position){
-        return ((BottomNavigationItem) ((BottomNavigationItemWithDot) getChildAt(position)).getChildAt(0));
+     BottomNavigationItemWithDot getBottomItem(int position){
+        return (((BottomNavigationItemWithDot) getChildAt(position)));
     }
 
     @Override
@@ -244,7 +284,7 @@ public class BottomNavigationBarContent extends LinearLayout {
         if(state instanceof  Bundle){
             Bundle bundle= (Bundle) state;
             int mRestoreActivePosition = bundle.getInt("mActivePosition");
-            setItemSelected(mRestoreActivePosition,true);
+            setItemSelected(mRestoreActivePosition,true,true);
             state=bundle.getParcelable("superState");
         }
         super.onRestoreInstanceState(state);

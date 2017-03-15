@@ -16,7 +16,7 @@
     <dimen name="item_scaleInactive_marginTop">8dp</dimen>
     <dimen name="item_shiftInactive_marginTop">16dp</dimen>
 
-    <dimen name="item_active_marginBottom">10dp</dimen>
+    <dimen name="item_active_marginBottom">8dp</dimen>
 
     <dimen name="item_icon_size">24dp</dimen>
 

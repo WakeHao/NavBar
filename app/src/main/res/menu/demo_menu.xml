@@ -5,6 +5,7 @@
     android:title="@string/home"
     android:icon="@mipmap/home_normal"
     icon2="@mipmap/home_selected"
+
     fragment="com.wakehao.demo.fragment.WeChatHomeFragment"
     ></item>
     <item
@@ -12,6 +13,7 @@
         android:title="通讯录"
         android:icon="@mipmap/category_normal"
         icon2="@mipmap/category_selected"
+
         fragment="com.wakehao.demo.fragment.WeChatContactFragment"
         ></item>
     <item
@@ -23,12 +25,11 @@
         fragment="com.wakehao.demo.fragment.WeChatFindFragment"
         ></item>
 
-
-
     <item
         android:id="@+id/test_4"
         android:title="我"
         android:icon="@mipmap/mine_normal"
+
         fragment="com.wakehao.demo.fragment.WeChatMineFragment"
         icon2="@mipmap/mine_selected"
         ></item>

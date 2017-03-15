@@ -8,6 +8,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.wakehao.bar.BottomNavigationBar;
+import com.wakehao.demo.CustomScrollView;
+import com.wakehao.demo.MainActivity;
 import com.wakehao.demo.R;
 
 
@@ -26,8 +29,9 @@ public class WeChatContactFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_we_chatc_contact, container, false);
+        View view=inflater.inflate(R.layout.fragment_we_chatc_contact, container, false);
+
+        return view;
     }
 
 }

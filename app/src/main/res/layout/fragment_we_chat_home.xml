@@ -4,13 +4,24 @@
     android:layout_height="match_parent"
     tools:context="com.wakehao.demo.fragment.WeChatHomeFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
-        android:gravity="center"
+    <com.wakehao.demo.CustomScrollView
+
+        android:id="@+id/scroll"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:textColor="#258555"
-        android:textSize="22sp"
-        android:text="@string/home" />
+        android:layout_height="match_parent">
+      <TextView
+          android:padding="8dp"
+          android:text="@string/home_text"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent" />
+
+    </com.wakehao.demo.CustomScrollView>
+    <!--<TextView-->
+        <!--android:gravity="center"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent"-->
+        <!--android:textColor="@color/green"-->
+        <!--android:textSize="22sp"-->
+        <!--android:text="Fragment_1" />-->
 
 </FrameLayout>
