@@ -394,7 +394,7 @@ public class BottomNavigationItemWithDot extends FrameLayout {
 
         if(isSelected){
             mImageView.setColorFilter(Color.TRANSPARENT,PorterDuff.Mode.SRC_IN);
-            mImageView_selected.setColorFilter(config.activeColor,PorterDuff.Mode.SRC_IN);
+            if(mImageView_selected!=null)mImageView_selected.setColorFilter(config.activeColor,PorterDuff.Mode.SRC_IN);
             FrameLayout.LayoutParams layoutParams = (LayoutParams) mImageView.getLayoutParams();
             layoutParams.topMargin=mActiveMarginTop;
             if(mImageView_selected!=null)mImageView_selected.setLayoutParams(layoutParams);

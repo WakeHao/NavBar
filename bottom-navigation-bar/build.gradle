@@ -40,7 +40,7 @@ apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: 'com.jfrog.bintray'
 
 //定义版本
-version = "0.0.2"
+version = "1.0.0"
 
 //定义相当网站
 def siteUrl = 'https://github.com/WakeHao/BottomNavigationBar'    // project homepage

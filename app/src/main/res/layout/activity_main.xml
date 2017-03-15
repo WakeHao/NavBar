@@ -15,18 +15,14 @@
         <!--android:layout_width="match_parent"-->
         <!--android:layout_height="match_parent"></android.support.v4.view.ViewPager>-->
 
-
     <FrameLayout
-
         android:id="@+id/fragment_container"
-
         android:layout_width="match_parent"
         android:layout_height="match_parent"></FrameLayout>
 <com.wakehao.bar.BottomNavigationBar
     android:id="@+id/bar"
     app:switchMode="shift"
-    app:isSlide="false"
-    app:menu="@menu/demo_menu"
+    app:menu="@menu/menu"
     app:selectedColor="@color/green"
     app:unSelectedColor="#999999"
     app:fragmentContainerId="@id/fragment_container"
