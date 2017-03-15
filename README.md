@@ -166,6 +166,7 @@ app:menu="@menu/demo_menu"
 可选设置，如果设置了点击显示**icon2**，未选中显示**android:icon**;如果未设置，选中和未选中都是**android:icon**,变化的只是图片的颜色
 #### shiftedColor
 可选设置，表示点击背景蔓延的水纹效果的颜色
+
 ![scale_color.gif](https://github.com/WakeHao/BottomNavigationBar/blob/master/image/scale_color.gif)
 
 #### fragment
